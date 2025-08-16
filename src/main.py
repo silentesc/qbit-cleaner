@@ -28,13 +28,14 @@ def main() -> int:
             name: str = torrent.name
             tags: str = torrent.tags
             content_path: str = env.get_qbittorrent_pre_path() + torrent.content_path
-            completed_on: datetime = datetime.fromtimestamp(torrent.completion_on)
+            completed_on_raw: int = torrent.completion_on
+            completed_on: datetime = datetime.fromtimestamp(completed_on_raw)
 
             # Ignore protected tags
             if env.get_qbittorrent_protected_tag() in tags.lower():
                 continue
             # Ignore torrents younger that x days
-            if completed_on > (datetime.now() - timedelta(days=env.get_min_torrent_age_days())):
+            if completed_on_raw == -1 or completed_on > (datetime.now() - timedelta(days=env.get_min_torrent_age_days())):
                 continue
             # Ignore torrents that have a connection to the media library
             if file_utils.is_content_in_media_library(content_path=content_path):
