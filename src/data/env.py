@@ -18,6 +18,10 @@ class Env:
         return self.__get_var("LOG_LEVEL")
 
 
+    def get_discord_webhook_url(self) -> str:
+        return self.__get_var("DISCORD_WEBHOOK_URL")
+
+
     def get_qbittorrent_host(self) -> str:
         return self.__get_var("QBITTORRENT_HOST")
 
@@ -42,8 +46,8 @@ class Env:
         return self.__get_var("QBITTORRENT_PROTECTED_TAG")
 
 
-    def get_min_torrent_age_days(self) -> int:
-        return int(self.__get_var("MIN_TORRENT_AGE_DAYS"))
+    def get_min_seeding_days(self) -> int:
+        return int(self.__get_var("MIN_SEEDING_DAYS"))
 
 
     def get_data_path(self) -> str:
