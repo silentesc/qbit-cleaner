@@ -3,6 +3,8 @@ import typing
 from qbittorrentapi import TorrentDictionary
 from datetime import datetime, timedelta
 
+from loguru import logger
+
 from src.file_utils import FileUtils
 
 from src.data.constants import env
@@ -36,15 +38,25 @@ class DeleteForgotten:
 
                 # Ignore protected tags
                 if env.get_qbittorrent_protected_tag() in tags.lower():
+                    logger.debug(f"Ignoring {name} (has protection a tag)")
+                    logger.trace(f"Tags of {name}: {tags}")
+                    logger.trace(f"Protection tag: {env.get_qbittorrent_protected_tag()}")
+                    continue
+                # Ignore uncompleted torrents
+                if completed_on_raw == -1:
+                    logger.debug(f"Ignoring {name} (not completed)")
                     continue
                 # Ignore torrents younger that x days
-                if completed_on_raw == -1 or completed_on > (datetime.now() - timedelta(days=env.get_min_torrent_age_days())):
+                if completed_on > (datetime.now() - timedelta(days=env.get_min_torrent_age_days())):
+                    logger.debug(f"Ignoring {name} (younger than {env.get_min_torrent_age_days()} days)")
+                    logger.trace(f"Completed on: {completed_on} ({completed_on_raw})")
                     continue
                 # Ignore torrents that have a connection to the media library
                 if file_utils.is_content_in_media_library(content_path=content_path):
+                    logger.debug(f"Ignoring {name} (has content in media library)")
                     continue
 
-                print(name)
+                logger.info(f"Found torrent that qualifies forgotten: {name}")
                 # torrent.stop()
                 # torrent.delete(delete_files=True)
                 # TODO Send notification

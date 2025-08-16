@@ -14,6 +14,10 @@ class Env:
         return env
 
 
+    def get_log_level(self) -> str:
+        return self.__get_var("LOG_LEVEL")
+
+
     def get_qbittorrent_host(self) -> str:
         return self.__get_var("QBITTORRENT_HOST")
 

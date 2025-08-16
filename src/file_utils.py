@@ -1,6 +1,8 @@
 import os
 import subprocess
 
+from loguru import logger
+
 
 class FileUtils:
     def __init__(self, data_path: str, torrents_path: str, media_path: str) -> None:
@@ -21,7 +23,7 @@ class FileUtils:
                 Returns an empty list if the file is not found or an error occurs.
         """
         if not os.path.exists(file_path):
-            print(f"Error: File not found at '{file_path}'")
+            logger.error(f"Error: File not found at '{file_path}'")
             return []
 
         try:
@@ -30,9 +32,12 @@ class FileUtils:
 
             command = ['find', self.data_path, '-xdev', '-inum', str(inode_num)]
             result = subprocess.check_output(command, stderr=subprocess.DEVNULL, text=True)
-            return result.strip().split('\n')
+            result_list: list[str] = result.strip().split('\n')
+            logger.trace(f"Hard links for {file_path}")
+            logger.trace(f"--> {", ".join(result_list)}")
+            return result_list
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            print(f"An error occurred: {e}")
+            logger.error(f"An error occurred: {e}")
             return []
 
 
@@ -50,11 +55,12 @@ class FileUtils:
         try:
             file_stat = os.stat(file_path)
             link_count = file_stat.st_nlink
+            logger.trace(f"link count for {file_path} is {link_count}")
             return link_count
         except FileNotFoundError: # This can happen if a file is deleted while the script is running
-            print(f"Warning: Could not find file {file_path}")
+            logger.warning(f"Warning: Could not find file {file_path}")
         except Exception as e:
-            print(f"An error occurred with {file_path}: {e}")
+            logger.error(f"An error occurred with {file_path}: {e}")
         return -1
 
 
@@ -71,18 +77,26 @@ class FileUtils:
             bool: Whether any of the content (or links of it) is in the media path
         """
         if os.path.isdir(content_path):
+            logger.trace(f"{content_path} is a dir")
             for root, _, files in os.walk(content_path):
                 for filename in files:
                     file_path = os.path.join(root, filename)
                     link_count: int = self.get_link_count(file_path=file_path)
                     if link_count > 1:
                         if any([self.media_path in f for f in self.find_hard_links(file_path=file_path)]):
+                            logger.trace(f"{file_path} does have hard links")
                             return True
+                        else:
+                            logger.trace(f"{file_path} does not have hard links")
         elif os.path.isfile(content_path):
+            logger.trace(f"{content_path} is a file")
             link_count: int = self.get_link_count(file_path=content_path)
             if link_count > 1:
                 if any([self.media_path in f for f in self.find_hard_links(file_path=content_path)]):
+                    logger.trace(f"{content_path} does have hard links")
                     return True
+                else:
+                    logger.trace(f"{content_path} does not have hard links")
         else:
-            print(f"Not a dir or file? {content_path}")
+            logger.warning(f"Not a dir or file? {content_path}")
         return False
