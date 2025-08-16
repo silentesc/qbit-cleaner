@@ -34,6 +34,14 @@ class Env:
         return self.__get_var("QBITTORRENT_PRE_PATH")
 
 
+    def get_qbittorrent_protected_tag(self) -> str:
+        return self.__get_var("QBITTORRENT_PROTECTED_TAG")
+
+
+    def get_min_torrent_age_days(self) -> int:
+        return int(self.__get_var("MIN_TORRENT_AGE_DAYS"))
+
+
     def get_data_path(self) -> str:
         return self.__get_var("DATA_PATH")
 

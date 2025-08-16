@@ -31,10 +31,10 @@ def main() -> int:
             completed_on: datetime = datetime.fromtimestamp(torrent.completion_on)
 
             # Ignore protected tags
-            if "protected" in tags.lower():
+            if env.get_qbittorrent_protected_tag() in tags.lower():
                 continue
-            # Ignore torrents younger that 5 days
-            if completed_on > (datetime.now() - timedelta(days=5)):
+            # Ignore torrents younger that x days
+            if completed_on > (datetime.now() - timedelta(days=env.get_min_torrent_age_days())):
                 continue
             # Ignore torrents that have a connection to the media library
             if file_utils.is_content_in_media_library(content_path=content_path):
