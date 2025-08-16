@@ -28,3 +28,19 @@ class Env:
 
     def get_qbittorrent_password(self) -> str:
         return self.__get_var("QBITTORRENT_PASSWORD")
+
+
+    def get_qbittorrent_pre_path(self) -> str:
+        return self.__get_var("QBITTORRENT_PRE_PATH")
+
+
+    def get_data_path(self) -> str:
+        return self.__get_var("DATA_PATH")
+
+
+    def get_torrents_path(self) -> str:
+        return self.__get_var("TORRENTS_PATH")
+
+
+    def get_media_path(self) -> str:
+        return self.__get_var("MEDIA_PATH")
