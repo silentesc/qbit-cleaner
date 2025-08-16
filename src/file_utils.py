@@ -34,7 +34,7 @@ class FileUtils:
             result = subprocess.check_output(command, stderr=subprocess.DEVNULL, text=True)
             result_list: list[str] = result.strip().split('\n')
             logger.trace(f"Hard links for {file_path}")
-            logger.trace(f"--> {", ".join(result_list)}")
+            [logger.trace(f"--> {r}") for r in result_list]
             return result_list
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logger.error(f"An error occurred: {e}")
@@ -84,10 +84,10 @@ class FileUtils:
                     link_count: int = self.get_link_count(file_path=file_path)
                     if link_count > 1:
                         if any([self.media_path in f for f in self.find_hard_links(file_path=file_path)]):
-                            logger.trace(f"{file_path} does have hard links")
+                            logger.trace(f"{file_path} does have hard links in media library")
                             return True
                         else:
-                            logger.trace(f"{file_path} does not have hard links")
+                            logger.trace(f"{file_path} does not have hard links in media library")
         elif os.path.isfile(content_path):
             logger.trace(f"{content_path} is a file")
             link_count: int = self.get_link_count(file_path=content_path)
