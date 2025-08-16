@@ -25,6 +25,7 @@ class DiscordWebhookUtils:
         try:
             response.raise_for_status()
         except requests.HTTPError as e:
+            logger.error(json)
             logger.error(f"Error while sending discord webhook embed: {response.status_code} {response.text}")
             logger.error(e)
         logger.trace(f"Request to discord returned status code {response.status_code}")
