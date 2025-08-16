@@ -21,6 +21,8 @@ class DeleteForgotten:
 
 
     def run(self) -> None:
+        logger.info("Running 'delete_forgotten' job")
+
         with qbittorrentapi.Client(**self.conn_info) as qbt_client:
             file_utils = FileUtils(
                 data_path=env.get_data_path(),
