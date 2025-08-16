@@ -31,7 +31,7 @@ class DiscordWebhookUtils:
         logger.trace(f"Request to discord returned status code {response.status_code}")
 
 
-    def send_webhook_embed(self, webhook_type: DiscordWebhookType, title: str, description: str = "", content: str = "", fields: list[dict[str, typing.Any]] = []) -> None:
+    def send_webhook_embed(self, webhook_type: DiscordWebhookType, title: str, description: str = "", content: str = "", fields: list[dict[str, str]] = []) -> None:
         if not self.webhook_url:
             return
 

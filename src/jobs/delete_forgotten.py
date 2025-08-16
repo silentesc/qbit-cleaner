@@ -83,10 +83,10 @@ class DeleteForgotten:
             fields=[
                 { "name": "Name", "value": name },
                 { "name": "Tracker", "value": tracker },
-                { "name": "Ratio", "value": ratio },
-                { "name": "Size (GB)", "value": total_size_gb },
+                { "name": "Ratio", "value": str(ratio) },
+                { "name": "Size (GB)", "value": str(total_size_gb) },
                 { "name": "Added", "value": DateTimeUtils().get_datetime_readable(added_on) },
                 { "name": "Completed", "value": DateTimeUtils().get_datetime_readable(completed_on) },
-                { "name": "Seeding Days", "value": seeding_time_days },
+                { "name": "Seeding Days", "value": str(seeding_time_days) },
             ]
         )
