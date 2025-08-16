@@ -62,14 +62,14 @@ class DeleteForgotten:
                 logger.info(f"Found torrent that qualifies forgotten: {name}")
                 # torrent.stop()
                 # torrent.delete(delete_files=True)
-                # self.send_delete_notification(torrent=torrent)
+                self.send_delete_notification(torrent=torrent)
 
 
     def send_delete_notification(self, torrent: TorrentDictionary) -> None:
         name: str = torrent.name
         tracker: str = torrent.tracker
         ratio: float = torrent.ratio
-        total_size_gb: int = torrent.total_size / 1000 / 1000
+        total_size_gb: int = torrent.total_size / 1000 / 1000 / 1000
         seeding_time_days: int = torrent.seeding_time / 60 / 60 / 24
         completed_on_raw: int = torrent.completion_on
         completed_on: datetime = datetime.fromtimestamp(completed_on_raw)
