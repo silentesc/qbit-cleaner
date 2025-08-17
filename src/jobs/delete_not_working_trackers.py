@@ -41,6 +41,7 @@ class DeleteNotWorkingTrackers:
                     logger.trace(f"Tags of {name}: {tags}")
                     logger.trace(f"Protection tag: {env.get_qbittorrent_protected_tag()}")
                     continue
+                # Ignore working trackers
                 if working:
                     logger.debug(f"Ignoring {name} trackers are working")
                     continue
