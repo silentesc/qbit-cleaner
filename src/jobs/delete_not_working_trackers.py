@@ -65,6 +65,7 @@ class DeleteNotWorkingTrackers:
                     tracker_info += f"URL: {tracker_url}\n"
                     tracker_info += f"Status: {tracker_status}\n"
                     tracker_info += f"Message: {tracker_msg}\n"
+                    logger.debug(f"Not working tracker ({name}):\n{tracker_info}")
                     tracker_infos.append(tracker_info)
 
                 # TODO Handle torrent
