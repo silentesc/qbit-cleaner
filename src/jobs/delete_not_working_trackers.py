@@ -25,6 +25,7 @@ class DeleteNotWorkingTrackers:
             for torrent in qbt_client.torrents_info():
                 torrent: TorrentDictionary
                 name: str = torrent.name
+                tags: str = torrent.tags
                 trackers: TrackersList = qbt_client.torrents_trackers(torrent.hash)
 
                 # 0 = Disabled
@@ -34,6 +35,12 @@ class DeleteNotWorkingTrackers:
                 # 4 = Not working
                 working: bool = any(tracker["status"] == 2 for tracker in trackers)
                 
+                # Ignore protected tags
+                if env.get_qbittorrent_protected_tag() in tags.lower():
+                    logger.debug(f"Ignoring {name} (has protection a tag)")
+                    logger.trace(f"Tags of {name}: {tags}")
+                    logger.trace(f"Protection tag: {env.get_qbittorrent_protected_tag()}")
+                    continue
                 if working:
                     logger.debug(f"Ignoring {name} trackers are working")
                     continue
