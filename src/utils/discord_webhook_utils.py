@@ -28,10 +28,10 @@ class DiscordWebhookUtils:
                 logger.trace("Discord webhook sent successfully")
                 return
             elif response.status_code == 429:
-                data = response.json()
-                retry_after = data.get("retry_after", 1000)
-                logger.warning(f"Discord webhook rate limited. Retrying after {round(retry_after, 2)}s")
-                time.sleep(retry_after)
+                data: dict = response.json()
+                retry_after_seconds: float = data.get("retry_after", 1)
+                logger.warning(f"Discord webhook rate limited. Retrying after {round(retry_after_seconds, 2)}s")
+                time.sleep(retry_after_seconds)
                 continue
             else:
                 logger.error(f"Failed to send discord webhook: {response.status_code} - {response.text}")
