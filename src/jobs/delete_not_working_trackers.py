@@ -47,26 +47,7 @@ class DeleteNotWorkingTrackers:
 
                 logger.info(f"Found torrent without working trackers: {name}")
 
-                tracker_infos: list[str] = []
-                for tracker in trackers:
-                    tracker: Tracker
-                    tracker_url = str(tracker["url"])
-                    tracker_msg = str(tracker["msg"])
-                    tracker_status = str(tracker["status"]) if not str(tracker["status"]).isdigit() else int(str(tracker["status"]))
-                    match tracker_status:
-                        case 0: tracker_status = "Disabled"
-                        case 1: tracker_status = "Not contacted yet"
-                        case 3: tracker_status = "Updating"
-                        case 4: tracker_status = "Not working"
-                        case _: tracker_status = str(tracker_status)
-                    if "dht" in tracker_url.lower() or "pex" in tracker_url.lower() or "lsd" in tracker_url.lower():
-                        continue
-                    tracker_info: str = ""
-                    tracker_info += f"URL: {tracker_url}\n"
-                    tracker_info += f"Status: {tracker_status}\n"
-                    tracker_info += f"Message: {tracker_msg}\n"
-                    logger.debug(f"Not working tracker ({name}):\n{tracker_info}")
-                    tracker_infos.append(tracker_info)
+                tracker_infos: list[str] = self.get_tracker_infos(name=name, trackers=trackers)
 
                 # TODO Handle torrent
                 # torrent.stop()
@@ -85,3 +66,27 @@ class DeleteNotWorkingTrackers:
                     title="Trackers not working",
                     fields=fields,
                 )
+
+
+    def get_tracker_infos(self, name: str, trackers: TrackersList) -> list[str]:
+        tracker_infos: list[str] = []
+        for tracker in trackers:
+            tracker: Tracker
+            tracker_url = str(tracker["url"])
+            tracker_msg = str(tracker["msg"])
+            tracker_status = str(tracker["status"]) if not str(tracker["status"]).isdigit() else int(str(tracker["status"]))
+            match tracker_status:
+                case 0: tracker_status = "Disabled"
+                case 1: tracker_status = "Not contacted yet"
+                case 3: tracker_status = "Updating"
+                case 4: tracker_status = "Not working"
+                case _: tracker_status = str(tracker_status)
+            if "dht" in tracker_url.lower() or "pex" in tracker_url.lower() or "lsd" in tracker_url.lower():
+                continue
+            tracker_info: str = ""
+            tracker_info += f"URL: {tracker_url}\n"
+            tracker_info += f"Status: {tracker_status}\n"
+            tracker_info += f"Message: {tracker_msg}\n"
+            logger.debug(f"Not working tracker ({name}):\n{tracker_info}")
+            tracker_infos.append(tracker_info)
+        return tracker_infos
