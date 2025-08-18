@@ -63,4 +63,4 @@ class DeleteForgotten:
                 # torrent.stop()
                 # torrent.delete(delete_files=True)
 
-                TorrentNotificationUtils().send_delete_notification("Deleted forgotten torrent", torrent=torrent)
+                TorrentNotificationUtils().send_torrent_info_notification("Deleted forgotten torrent", torrent=torrent)

@@ -6,7 +6,7 @@ from src.utils.discord_webhook_utils import DiscordWebhookUtils, DiscordWebhookT
 
 
 class TorrentNotificationUtils:
-    def send_delete_notification(self, embed_title: str, torrent: TorrentDictionary) -> None:
+    def send_torrent_info_notification(self, embed_title: str, torrent: TorrentDictionary) -> None:
         name: str = torrent.name
         category: str = torrent.category
         tags: str = torrent.tags
