@@ -18,6 +18,10 @@ class Env:
         return self.__get_var("LOG_LEVEL")
 
 
+    def get_config_path(self) -> str:
+        return self.__get_var("CONFIG_PATH")
+
+
     def get_discord_webhook_url(self) -> str:
         return self.__get_var("DISCORD_WEBHOOK_URL")
 
@@ -60,3 +64,11 @@ class Env:
 
     def get_media_path(self) -> str:
         return self.__get_var("MEDIA_PATH")
+
+
+    def get_min_not_working_days(self) -> int:
+        return int(self.__get_var("MIN_NOT_WORKING_DAYS"))
+
+
+    def get_required_strikes(self) -> int:
+        return int(self.__get_var("REQUIRED_STRIKES"))
