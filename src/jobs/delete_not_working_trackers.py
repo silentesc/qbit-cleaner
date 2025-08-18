@@ -4,7 +4,7 @@ from qbittorrentapi import TorrentDictionary, Tracker, TrackersList
 from loguru import logger
 
 from src.utils.discord_webhook_utils import DiscordWebhookUtils, DiscordWebhookType
-from src.utils.strike_utils import StrikeUtils
+from src.utils.strike_utils import StrikeUtils, StrikeType
 
 from src.data.constants import env
 
@@ -42,17 +42,17 @@ class DeleteNotWorkingTrackers:
                     logger.debug(f"Ignoring {name} (has protection a tag)")
                     logger.trace(f"Tags of {name}: {tags}")
                     logger.trace(f"Protection tag: {env.get_qbittorrent_protected_tag()}")
-                    StrikeUtils().reset_torrent(torrent_hash=hash)
+                    StrikeUtils().reset_torrent(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
                     continue
                 # Ignore working trackers
                 if working:
                     logger.debug(f"Ignoring {name} (trackers are working)")
-                    StrikeUtils().reset_torrent(torrent_hash=hash)
+                    StrikeUtils().reset_torrent(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
                     continue
 
                 tracker_infos: list[str] = self.get_tracker_infos(name=name, trackers=trackers)
 
-                is_torrent_limit_reached: bool = StrikeUtils().strike_torrent(torrent_hash=hash)
+                is_torrent_limit_reached: bool = StrikeUtils().strike_torrent(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
                 if not is_torrent_limit_reached:
                     logger.debug(f"Ignoring {name} (not reaching criteria)")
                     continue
