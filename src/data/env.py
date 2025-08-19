@@ -16,14 +16,6 @@ class Env:
         return env
 
 
-    def get_config_path(self) -> str:
-        return self.__get_var("CONFIG_PATH")
-
-
-    def get_data_path(self) -> str:
-        return self.__get_var("DATA_PATH")
-
-
     def get_torrents_path(self) -> str:
         return self.__get_var("TORRENTS_PATH")
 

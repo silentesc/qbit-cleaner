@@ -27,7 +27,7 @@ class DeleteForgotten:
 
         with qbittorrentapi.Client(**self.conn_info) as qbt_client:
             file_utils = FileUtils(
-                data_path=ENV.get_data_path(),
+                data_path="/data",
                 torrents_path=ENV.get_torrents_path(),
                 media_path=ENV.get_media_path(),
             )

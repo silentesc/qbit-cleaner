@@ -1,4 +1,5 @@
 import sys
+import time
 from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 from loguru import logger
@@ -15,7 +16,7 @@ from src.data.env import ENV
 def main() -> int:
     # Logging setup
     logger.remove(0)
-    logger.add(f"{ENV.get_config_path()}/logs/{DateTimeUtils().get_datetime_readable(datetime.now())}.log", level=CONFIG["logging"]["log_level"])
+    logger.add(f"/config/logs/{DateTimeUtils().get_datetime_readable(datetime.now())}.log", level=CONFIG["logging"]["log_level"])
     logger.add(sys.stderr, level=CONFIG["logging"]["log_level"])
 
     # Db setup
@@ -25,11 +26,15 @@ def main() -> int:
         case "delete_forgotten":
             logger.info("Testing delete_forgotten")
             DeleteForgotten().run()
-            return 0
+            logger.info("Testing delete_forgotten finished, sleeping now")
+            while True:
+                time.sleep(1)
         case "delete_not_working_trackers":
             logger.info("Testing delete_not_working_trackers")
             DeleteNotWorkingTrackers().run()
-            return 0
+            logger.info("Testing delete_not_working_trackers finished, sleeping now")
+            while True:
+                time.sleep(1)
 
     # Job setup
     scheduler = BlockingScheduler()
