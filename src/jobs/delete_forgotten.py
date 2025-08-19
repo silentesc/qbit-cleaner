@@ -37,7 +37,7 @@ class DeleteForgotten:
                 name: str = torrent.name
                 tags: str = torrent.tags
                 seeding_time_days: int = torrent.seeding_time / 60 / 60 / 24
-                content_path: str = CONFIG["qbittorrent"]["pre_path"] + torrent.content_path
+                content_path: str = "/".join(CONFIG["qbittorrent"]["data_path"].split("/")[:-1]) + torrent.content_path
                 completed_on_raw: int = torrent.completion_on
 
                 # Ignore protected tags
