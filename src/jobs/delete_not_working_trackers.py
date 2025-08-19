@@ -6,16 +6,16 @@ from loguru import logger
 from src.utils.discord_webhook_utils import DiscordWebhookUtils, DiscordWebhookType
 from src.utils.strike_utils import StrikeUtils, StrikeType
 
-from src.data.constants import env
+from src.data.config import CONFIG
 
 
 class DeleteNotWorkingTrackers:
     def __init__(self) -> None:
         self.conn_info: dict[str, typing.Any] = dict(
-            host=env.get_qbittorrent_host(),
-            port=env.get_qbittorrent_port(),
-            username=env.get_qbittorrent_username(),
-            password=env.get_qbittorrent_password(),
+            host=CONFIG["qbittorrent"]["host"],
+            port=CONFIG["qbittorrent"]["port"],
+            username=CONFIG["qbittorrent"]["username"],
+            password=CONFIG["qbittorrent"]["password"],
         )
 
 
@@ -38,10 +38,10 @@ class DeleteNotWorkingTrackers:
                 working: bool = any(tracker["status"] == 2 for tracker in trackers)
                 
                 # Ignore protected tags
-                if env.get_qbittorrent_protected_tag() in tags.lower():
+                if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
                     logger.debug(f"Ignoring {name} (has protection a tag)")
                     logger.trace(f"Tags of {name}: {tags}")
-                    logger.trace(f"Protection tag: {env.get_qbittorrent_protected_tag()}")
+                    logger.trace(f"Protection tag: {CONFIG["qbittorrent"]["protected_tag"]}")
                     StrikeUtils().reset_torrent(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
                     continue
                 # Ignore working trackers

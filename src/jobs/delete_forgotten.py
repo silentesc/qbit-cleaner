@@ -6,16 +6,17 @@ from loguru import logger
 from src.utils.file_utils import FileUtils
 from src.utils.torrent_notification_utils import TorrentNotificationUtils
 
-from src.data.constants import env
+from src.data.env import ENV
+from src.data.config import CONFIG
 
 
 class DeleteForgotten:
     def __init__(self) -> None:
         self.conn_info: dict[str, typing.Any] = dict(
-            host=env.get_qbittorrent_host(),
-            port=env.get_qbittorrent_port(),
-            username=env.get_qbittorrent_username(),
-            password=env.get_qbittorrent_password(),
+            host=CONFIG["qbittorrent"]["host"],
+            port=CONFIG["qbittorrent"]["port"],
+            username=CONFIG["qbittorrent"]["username"],
+            password=CONFIG["qbittorrent"]["password"],
         )
 
 
@@ -24,9 +25,9 @@ class DeleteForgotten:
 
         with qbittorrentapi.Client(**self.conn_info) as qbt_client:
             file_utils = FileUtils(
-                data_path=env.get_data_path(),
-                torrents_path=env.get_torrents_path(),
-                media_path=env.get_media_path(),
+                data_path=ENV.get_data_path(),
+                torrents_path=ENV.get_torrents_path(),
+                media_path=ENV.get_media_path(),
             )
 
             for torrent in qbt_client.torrents_info():
@@ -34,22 +35,22 @@ class DeleteForgotten:
                 name: str = torrent.name
                 tags: str = torrent.tags
                 seeding_time_days: int = torrent.seeding_time / 60 / 60 / 24
-                content_path: str = env.get_qbittorrent_pre_path() + torrent.content_path
+                content_path: str = CONFIG["qbittorrent"]["pre_path"] + torrent.content_path
                 completed_on_raw: int = torrent.completion_on
 
                 # Ignore protected tags
-                if env.get_qbittorrent_protected_tag() in tags.lower():
+                if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
                     logger.debug(f"Ignoring {name} (has protection a tag)")
                     logger.trace(f"Tags of {name}: {tags}")
-                    logger.trace(f"Protection tag: {env.get_qbittorrent_protected_tag()}")
+                    logger.trace(f"Protection tag: {CONFIG["qbittorrent"]["protected_tag"]}")
                     continue
                 # Ignore uncompleted torrents
                 if completed_on_raw == -1:
                     logger.debug(f"Ignoring {name} (not completed)")
                     continue
                 # Ignore torrents seeding less than x days
-                if seeding_time_days < env.get_min_seeding_days():
-                    logger.debug(f"Ignoring {name} (seeding less than {env.get_min_seeding_days()} days)")
+                if seeding_time_days < CONFIG["delete_forgotten"]["min_seeding_days"]:
+                    logger.debug(f"Ignoring {name} (seeding less than {CONFIG["delete_forgotten"]["min_seeding_days"]} days)")
                     logger.trace(f"Seeding days: {seeding_time_days}")
                     continue
                 # Ignore torrents that have a connection to the media library

@@ -5,7 +5,7 @@ from enum import Enum
 
 from loguru import logger
 
-from src.data.constants import env
+from src.data.config import CONFIG
 
 
 class DiscordWebhookType(Enum):
@@ -15,7 +15,7 @@ class DiscordWebhookType(Enum):
 
 class DiscordWebhookUtils:
     def __init__(self) -> None:
-        self.webhook_url: str = env.get_discord_webhook_url()
+        self.webhook_url: str = CONFIG["notifications"]["discord_webhook_url"]
 
 
     def __make_request(self, json: typing.Any) -> None:

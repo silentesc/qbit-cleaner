@@ -1,8 +1,8 @@
 import os
 
-from src.data.env import Env
+from src.data.env import ENV
 
 
-env = Env()
-os.makedirs(env.get_config_path(), exist_ok=True)
-data_file_path = f"{env.get_config_path()}/data.db"
+os.makedirs(ENV.get_config_path(), exist_ok=True)
+data_file_path = f"{ENV.get_config_path()}/data.db"
+config_file_path = f"{ENV.get_config_path()}/config.yaml"
