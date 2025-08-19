@@ -1,5 +1,6 @@
 import sys
 from datetime import datetime
+from apscheduler.schedulers.blocking import BlockingScheduler
 from loguru import logger
 
 from src.jobs.delete_forgotten import DeleteForgotten
@@ -11,13 +12,24 @@ from src.data.config import CONFIG
 
 
 def main() -> int:
+    # Logging setup
     logger.remove(0)
     logger.add(f"logs/{DateTimeUtils().get_datetime_readable(datetime.now())}.log", level=CONFIG["logging"]["log_level"])
     logger.add(sys.stderr, level=CONFIG["logging"]["log_level"])
 
+    # Db setup
     DbScripts().create_tables()
 
-    # DeleteForgotten().run()
-    DeleteNotWorkingTrackers().run()
+    # Job setup
+    scheduler = BlockingScheduler()
+    scheduler.add_job(DeleteForgotten().run, "interval", hours=CONFIG["jobs"]["delete_forgotten"]["interval_hours"])
+    scheduler.add_job(DeleteNotWorkingTrackers().run, "interval", hours=CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"])
+    try:
+        logger.info("Startup complete, starting scheduler")
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("Exiting, shutting down scheduler")
+        scheduler.shutdown(wait=True)
 
+    # Exit with code 0
     return 0
