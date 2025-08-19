@@ -1,1 +1,89 @@
-# IN ACTIVE DEVELOPMENT
+# !!! IN ACTIVE DEVELOPMENT !!!
+
+# How to install
+
+### Build image
+This has to be done everytime you want to update
+```bash
+git clone https://github.com/silentesc/qbit-cleaner.git
+```
+
+```bash
+cd qbit-cleaner
+```
+
+```bash
+sudo docker build -t qbit-cleaner .
+```
+
+### Docker Compose
+```yaml
+services:
+  qbit-cleaner:
+    image: qbit-cleaner
+    container_name: qbit-cleaner
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - TORRENTS_PATH=/data/path/to/torrents
+      - MEDIA_PATH=/data/path/to/media
+    volumes:
+      - /path/to/config:/config
+      - /path/to/data:/data
+    restart: unless-stopped
+```
+
+### Create config.yaml in config folder for qbit-cleaner
+```yaml
+testing:
+  # Testing a job without waiting for the interval
+  # Scheduler will not be started after the test run
+  job:
+
+logging:
+  # TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_level: DEBUG
+
+notifications:
+  # Keep empty to disable notifications
+  discord_webhook_url:
+
+qbittorrent:
+  # Credentials
+  host: localhost
+  port: 8080
+  username: admin
+  password: adminadmin
+
+  # Config
+  data_path: /data/qbittorrent # Has to exactly match the /data path specified for qbittorrent
+  protected_tag: protected
+
+jobs:
+  delete_forgotten:
+    # Execute this job every x hours, 0 to disable
+    interval_hours: 24
+    # The minimum amount of days a torrent had to be seeding before getting deleted
+    min_seeding_days: 20
+    # What happens when a forgotten torrent has been found
+    # test - everything works (including notifications) but nothing happens with the torrent
+    # stop - Torrent will be stopped
+    # delete - Torrent + files will be deleted
+    action: test
+
+  delete_not_working_trackers:
+    # Execute this job every x hours, 0 to disable
+    interval_hours: 1
+    # The minimum amount of days the trackers has to be not working before getting deleted
+    # If the trackers work in the meantime, it resets the days counter
+    min_not_working_days: 3
+    # The minimum amount of strikes the torrent has to get before getting deleted
+    # If the trackers work in the meantime, it resets the strikes counter
+    required_strikes: 5
+    # What happens when a torrent without working trackers has been found and minimum criteria are met
+    # test - everything works (including notifications) but nothing happens with the torrent
+    # stop - Torrent will be stopped
+    # delete - Torrent + files will be deleted
+    action: test
+```
