@@ -49,7 +49,7 @@ class DiscordWebhookUtils:
         }
 
         match webhook_type:
-            case DiscordWebhookType.INFO: embed["color"] = 0x69ff81
+            case DiscordWebhookType.INFO: embed["color"] = 0x697cff
             case DiscordWebhookType.ERROR: embed["color"] = 0xff8080
 
         data = {

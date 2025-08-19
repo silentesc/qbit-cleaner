@@ -50,32 +50,27 @@ class DeleteNotWorkingTrackers:
                     StrikeUtils().reset_torrent(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
                     continue
 
-                tracker_infos: list[str] = self.get_tracker_infos(name=name, trackers=trackers)
-
                 is_torrent_limit_reached: bool = StrikeUtils().strike_torrent(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
                 if not is_torrent_limit_reached:
                     logger.debug(f"Ignoring {name} (not reaching criteria)")
                     continue
                 else:
                     logger.info(f"Found torrent without working trackers that matches criteria: {name}")
-                    # TODO Handle torrent
-                    # torrent.delete(delete_files=True)
-                    pass
+                    match CONFIG["jobs"]["delete_not_working_trackers"]["action"]:
+                        case "test":
+                            logger.info("Action = test | Torrent remains unhandled")
+                        case "stop":
+                            logger.info("Action = stop | Stopping torrent")
+                            torrent.stop()
+                        case "delete":
+                            logger.info("Action = delete | Deleting torrent + files")
+                            torrent.delete(delete_files=True)
+                        case _:
+                            logger.warning("Invalid action for delete_not_working_trackers job")
 
-                fields: list[dict[str, str | bool]] = [
-                    { "name": "Torrent", "value": name },
-                ]
-                for tracker_info in tracker_infos:
-                    tracker_info: str
-                    fields.append(
-                        { "name": "Tracker", "value": tracker_info },
-                    )
+                self.send_discord_notification(torrent_name=name, trackers=trackers)
 
-                DiscordWebhookUtils().send_webhook_embed(
-                    webhook_type=DiscordWebhookType.ERROR,
-                    title="Trackers not working",
-                    fields=fields,
-                )
+        logger.info(f"job delete_not_working_trackers finished, next run in {CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"]} hours")
 
 
     def get_tracker_infos(self, name: str, trackers: TrackersList) -> list[str]:
@@ -100,3 +95,23 @@ class DeleteNotWorkingTrackers:
             logger.debug(f"Not working tracker ({name}):\n{tracker_info}")
             tracker_infos.append(tracker_info)
         return tracker_infos
+
+
+    def send_discord_notification(self, torrent_name: str, trackers: TrackersList) -> None:
+        tracker_infos: list[str] = self.get_tracker_infos(name=torrent_name, trackers=trackers)
+
+        fields: list[dict[str, str | bool]] = [
+            { "name": "Action", "value": CONFIG["jobs"]["delete_not_working_trackers"]["action"] },
+            { "name": "Torrent", "value": torrent_name },
+        ]
+        for tracker_info in tracker_infos:
+            tracker_info: str
+            fields.append(
+                { "name": "Tracker", "value": tracker_info },
+            )
+
+        DiscordWebhookUtils().send_webhook_embed(
+            webhook_type=DiscordWebhookType.INFO,
+            title="Found tracker not working",
+            fields=fields,
+        )

@@ -22,8 +22,13 @@ def main() -> int:
 
     # Job setup
     scheduler = BlockingScheduler()
-    scheduler.add_job(DeleteForgotten().run, "interval", hours=CONFIG["jobs"]["delete_forgotten"]["interval_hours"])
-    scheduler.add_job(DeleteNotWorkingTrackers().run, "interval", hours=CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"])
+    if CONFIG["jobs"]["delete_forgotten"]["interval_hours"] != 0:
+        scheduler.add_job(DeleteForgotten().run, "interval", hours=CONFIG["jobs"]["delete_forgotten"]["interval_hours"])
+        logger.info(f"job delete_forgotten has been added, next run in {CONFIG["jobs"]["delete_forgotten"]["interval_hours"]} hours")
+    if CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"] != 0:
+        scheduler.add_job(DeleteNotWorkingTrackers().run, "interval", hours=CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"])
+        logger.info(f"job delete_not_working_trackers has been added, next run in {CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"]} hours")
+
     try:
         logger.info("Startup complete, starting scheduler")
         scheduler.start()
