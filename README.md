@@ -1,13 +1,14 @@
 # !!! IN ACTIVE DEVELOPMENT !!!
 
 # How to install
-
-### Build image
 This has to be done everytime you want to update
+
+### Clone repository
 ```bash
 git clone https://github.com/silentesc/qbit-cleaner.git
 ```
 
+### Build image
 ```bash
 cd qbit-cleaner
 ```
