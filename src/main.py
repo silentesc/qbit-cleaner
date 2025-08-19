@@ -20,6 +20,16 @@ def main() -> int:
     # Db setup
     DbScripts().create_tables()
 
+    match CONFIG["testing"]["job"]:
+        case "delete_forgotten":
+            logger.info("Testing delete_forgotten")
+            DeleteForgotten().run()
+            return 0
+        case "delete_not_working_trackers":
+            logger.info("Testing delete_not_working_trackers")
+            DeleteNotWorkingTrackers().run()
+            return 0
+
     # Job setup
     scheduler = BlockingScheduler()
     if CONFIG["jobs"]["delete_forgotten"]["interval_hours"] != 0:
