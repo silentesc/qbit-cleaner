@@ -9,12 +9,13 @@ from src.utils.datetime_utils import DateTimeUtils
 from src.utils.db_scripts import DbScripts
 
 from src.data.config import CONFIG
+from src.data.env import ENV
 
 
 def main() -> int:
     # Logging setup
     logger.remove(0)
-    logger.add(f"logs/{DateTimeUtils().get_datetime_readable(datetime.now())}.log", level=CONFIG["logging"]["log_level"])
+    logger.add(f"{ENV.get_config_path()}/logs/{DateTimeUtils().get_datetime_readable(datetime.now())}.log", level=CONFIG["logging"]["log_level"])
     logger.add(sys.stderr, level=CONFIG["logging"]["log_level"])
 
     # Db setup
