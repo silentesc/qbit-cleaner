@@ -14,7 +14,7 @@ cd qbit-cleaner
 ```
 
 ```bash
-sudo docker build -t qbit-cleaner .
+docker build -t qbit-cleaner .
 ```
 
 ### Docker Compose
