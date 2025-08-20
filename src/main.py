@@ -50,7 +50,7 @@ def main() -> int:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):
         logger.info("Exiting, shutting down scheduler")
-        scheduler.shutdown(wait=False)
+        scheduler.shutdown(wait=True)
 
     # Exit with code 0
     return 0
