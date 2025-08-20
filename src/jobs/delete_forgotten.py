@@ -101,16 +101,14 @@ class DeleteForgotten:
                     { "name": "Name", "value": name },
                     { "name": "Tracker", "value": tracker },
 
-                    { "name": "Category", "value": category, "inline": True },
-                    { "name": "Tags", "value": tags, "inline": True },
-                    { "name": "\u200b", "value": "\u200b", "inline": True },
+                    { "name": "Category", "value": category },
+                    { "name": "Tags", "value": tags },
 
-                    { "name": "Total Size", "value": f"{str(round(total_size_gib, 2))}GiB | {str(round(total_size_gb, 2))}GB", "inline": True },
-                    { "name": "Ratio", "value": str(round(ratio, 2)), "inline": True },
-                    { "name": "\u200b", "value": "\u200b", "inline": True },
+                    { "name": "Total Size", "value": f"{str(round(total_size_gib, 2))}GiB | {str(round(total_size_gb, 2))}GB" },
+                    { "name": "Ratio", "value": str(round(ratio, 2)) },
 
-                    { "name": "Added", "value": DateTimeUtils().get_datetime_readable(added_on), "inline": True },
-                    { "name": "Completed", "value": DateTimeUtils().get_datetime_readable(completed_on), "inline": True },
-                    { "name": "Seeding Days", "value": str(round(seeding_time_days, 2)), "inline": True },
+                    { "name": "Added", "value": DateTimeUtils().get_datetime_readable(added_on) },
+                    { "name": "Completed", "value": DateTimeUtils().get_datetime_readable(completed_on) },
+                    { "name": "Seeding Days", "value": str(round(seeding_time_days, 2)) },
                 ]
             )
