@@ -58,7 +58,6 @@ qbittorrent:
   password: adminadmin
 
   # Config
-  data_path: /data/qbittorrent # Has to exactly match the /data path specified for qbittorrent
   protected_tag: protected
 
 jobs:
