@@ -77,10 +77,10 @@ jobs:
     interval_hours: 1
     # The minimum amount of days the trackers has to be not working before getting deleted
     # If the trackers work in the meantime, it resets the days counter
-    min_not_working_days: 3
+    min_not_working_days: 7
     # The minimum amount of strikes the torrent has to get before getting deleted
     # If the trackers work in the meantime, it resets the strikes counter
-    required_strikes: 5
+    required_strikes: 10
     # What happens when a torrent without working trackers has been found and minimum criteria are met
     # test - everything works (including notifications) but nothing happens with the torrent
     # stop - Torrent will be stopped
