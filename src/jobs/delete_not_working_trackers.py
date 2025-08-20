@@ -36,21 +36,25 @@ class DeleteNotWorkingTrackers:
                 # 3 = Updating
                 # 4 = Not working
                 working: bool = any(tracker["status"] == 2 for tracker in trackers)
+
+                strike_utils = StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
                 
                 # Ignore protected tags
                 if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
                     logger.debug(f"Ignoring {name} (has protection a tag)")
                     logger.trace(f"Tags of {name}: {tags}")
                     logger.trace(f"Protection tag: {CONFIG["qbittorrent"]["protected_tag"]}")
-                    StrikeUtils().reset_torrent(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
+                    strike_utils.reset_torrent()
                     continue
                 # Ignore working trackers
                 if working:
                     logger.debug(f"Ignoring {name} (trackers are working)")
-                    StrikeUtils().reset_torrent(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
+                    strike_utils.reset_torrent()
                     continue
 
-                is_torrent_limit_reached: bool = StrikeUtils().strike_torrent(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
+                logger.debug(f"{name} has no working trackers")
+
+                is_torrent_limit_reached: bool = strike_utils.strike_torrent()
                 if not is_torrent_limit_reached:
                     logger.debug(f"Ignoring {name} (not reaching criteria)")
                     continue

@@ -5,12 +5,11 @@ from src.data.constants import data_file_path
 
 
 class DbManager:
-    def __init__(self, path: str = data_file_path):
-        self.path = path
+    def __init__(self):
         self.conn: Optional[sqlite3.Connection] = None
 
     def __enter__(self) -> "DbManager":
-        self.conn = sqlite3.connect(self.path)
+        self.conn = sqlite3.connect(data_file_path)
         self.conn.row_factory = sqlite3.Row
         return self
 
