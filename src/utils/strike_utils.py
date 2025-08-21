@@ -30,7 +30,7 @@ class StrikeUtils:
             db.execute(query=f"INSERT INTO {self.strike_type.value}_strikes (hash, timestamp) VALUES (?, ?)", params=(self.torrent_hash, datetime.now()))
 
         strikes: int = self.__get_strikes()
-        consecutively_days: int = self.__get_consecutively_days()
+        consecutively_days: int = self.__get_consecutive_days()
 
         # If required strikes and min not working days are reached, delete torrent and return true
         if strikes >= CONFIG["jobs"][self.strike_type.value]["required_strikes"] and consecutively_days >= CONFIG["jobs"][self.strike_type.value]["min_not_working_days"]:
@@ -64,9 +64,9 @@ class StrikeUtils:
         return row["strikes"]
 
 
-    def __get_consecutively_days(self) -> int:
+    def __get_consecutive_days(self) -> int:
         with DbManager() as db:
-            rows = db.execute_fetchall(query="SELECT * FROM delete_not_working_trackers_strikes WHERE hash = ? ORDER BY timestamp DESC", params=("torrent_hash",))
+            rows = db.execute_fetchall(query="SELECT * FROM delete_not_working_trackers_strikes WHERE hash = ? ORDER BY timestamp DESC", params=(self.torrent_hash,))
 
         if not rows:
             return 0
