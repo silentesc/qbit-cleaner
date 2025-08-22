@@ -6,7 +6,7 @@ from loguru import logger
 
 from src.utils.file_utils import FileUtils
 from src.utils.datetime_utils import DateTimeUtils
-from src.utils.discord_webhook_utils import DiscordWebhookUtils, DiscordWebhookType
+from src.utils.discord_webhook_utils import DiscordWebhookUtils, EmbedColor
 
 from src.data.env import ENV
 from src.data.config import CONFIG
@@ -93,7 +93,7 @@ class DeleteForgotten:
             added_on: datetime = datetime.fromtimestamp(added_on_raw)
 
             DiscordWebhookUtils().send_webhook_embed(
-                webhook_type=DiscordWebhookType.INFO,
+                embed_color=EmbedColor.BLUE,
                 title=embed_title,
                 fields=[
                     { "name": "Action", "value": CONFIG["jobs"]["delete_forgotten"]["action"] },

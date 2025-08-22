@@ -3,7 +3,7 @@ import typing
 from qbittorrentapi import TorrentDictionary, Tracker, TrackersList
 from loguru import logger
 
-from src.utils.discord_webhook_utils import DiscordWebhookUtils, DiscordWebhookType
+from src.utils.discord_webhook_utils import DiscordWebhookUtils, EmbedColor
 from src.utils.strike_utils import StrikeUtils, StrikeType
 
 from src.data.config import CONFIG
@@ -115,7 +115,7 @@ class DeleteNotWorkingTrackers:
             )
 
         DiscordWebhookUtils().send_webhook_embed(
-            webhook_type=DiscordWebhookType.INFO,
+            embed_color=EmbedColor.GREEN,
             title="Found tracker not working",
             fields=fields,
         )

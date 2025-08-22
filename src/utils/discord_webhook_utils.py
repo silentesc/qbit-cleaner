@@ -8,9 +8,10 @@ from loguru import logger
 from src.data.config import CONFIG
 
 
-class DiscordWebhookType(Enum):
-    INFO = 1
-    ERROR = 2
+class EmbedColor(Enum):
+    BLUE = 0x697cff
+    GREEN = 0x69ff7e
+    RED = 0xff8080
 
 
 class DiscordWebhookUtils:
@@ -38,7 +39,7 @@ class DiscordWebhookUtils:
                 return
 
 
-    def send_webhook_embed(self, webhook_type: DiscordWebhookType, title: str, description: str = "", content: str = "", fields: list[dict[str, str | bool]] = []) -> None:
+    def send_webhook_embed(self, embed_color: EmbedColor, title: str, description: str = "", content: str = "", fields: list[dict[str, str | bool]] = []) -> None:
         if not self.webhook_url:
             return
 
@@ -46,11 +47,8 @@ class DiscordWebhookUtils:
             "title": title,
             "description": description,
             "fields": fields,
+            "color": embed_color.value,
         }
-
-        match webhook_type:
-            case DiscordWebhookType.INFO: embed["color"] = 0x697cff
-            case DiscordWebhookType.ERROR: embed["color"] = 0xff8080
 
         data = {
             "content": content,
