@@ -51,6 +51,18 @@ class StrikeUtils:
             db.execute(query=f"DELETE FROM {self.strike_type.value}_strikes WHERE hash = ?", params=(self.torrent_hash,))
 
 
+    def cleanup_db(self, hashes: list[str]) -> None:
+        with DbManager() as db:
+            rows = db.execute_fetchall(query=f"SELECT hash FROM {self.strike_type}_strikes GROUP BY hash")
+
+        for row in rows:
+            torrent_hash = row["hash"]
+            logger.trace(f"not torrent_hash in hashes | not {torrent_hash} in hashes | {not torrent_hash in hashes}")
+            if not torrent_hash in hashes:
+                StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=torrent_hash).reset_torrent()
+                logger.debug(f"Deleted torrent with hash {torrent_hash} from db because it's not in qbittorrent anymore")
+
+
     # Utils
 
 
@@ -66,7 +78,7 @@ class StrikeUtils:
 
     def get_consecutive_days(self) -> int:
         with DbManager() as db:
-            rows = db.execute_fetchall(query="SELECT * FROM delete_not_working_trackers_strikes WHERE hash = ? ORDER BY timestamp DESC", params=(self.torrent_hash,))
+            rows = db.execute_fetchall(query=f"SELECT * FROM {self.strike_type}_strikes WHERE hash = ? ORDER BY timestamp DESC", params=(self.torrent_hash,))
 
         if not rows:
             return 0

@@ -74,6 +74,10 @@ class DeleteNotWorkingTrackers:
 
                 self.send_discord_notification(torrent_name=name, trackers=trackers)
 
+        with qbittorrentapi.Client(**self.conn_info) as qbt_client:
+            hashes = [torrent.hash for torrent in qbt_client.torrents_info()]
+            StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash="unused").cleanup_db(hashes=hashes)
+
         logger.info(f"job delete_not_working_trackers finished, next run in {CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"]} hours")
 
 
