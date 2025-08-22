@@ -51,26 +51,26 @@ class DeleteNotWorkingTrackers:
                     logger.debug(f"Ignoring {name} (trackers are working)")
                     strike_utils.reset_torrent()
                     continue
-
-                logger.debug(f"{name} has no working trackers")
-
+                # Ignore not reaching criteria
                 is_torrent_limit_reached: bool = strike_utils.strike_torrent()
                 if not is_torrent_limit_reached:
-                    logger.debug(f"Ignoring {name} (not reaching criteria)")
+                    required_strikes = CONFIG["jobs"]["delete_not_working_trackers"]["required_strikes"]
+                    min_not_working_days = CONFIG["jobs"]["delete_not_working_trackers"]["min_not_working_days"]
+                    logger.info(f"{name} has no working trackers but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_not_working_days} days)")
                     continue
-                else:
-                    logger.info(f"Found torrent without working trackers that matches criteria: {name}")
-                    match CONFIG["jobs"]["delete_not_working_trackers"]["action"]:
-                        case "test":
-                            logger.info("Action = test | Torrent remains unhandled")
-                        case "stop":
-                            logger.info("Action = stop | Stopping torrent")
-                            torrent.stop()
-                        case "delete":
-                            logger.info("Action = delete | Deleting torrent + files")
-                            torrent.delete(delete_files=True)
-                        case _:
-                            logger.warning("Invalid action for delete_not_working_trackers job")
+
+                logger.info(f"Found torrent without working trackers that matches criteria: {name}")
+                match CONFIG["jobs"]["delete_not_working_trackers"]["action"]:
+                    case "test":
+                        logger.info("Action = test | Torrent remains unhandled")
+                    case "stop":
+                        logger.info("Action = stop | Stopping torrent")
+                        torrent.stop()
+                    case "delete":
+                        logger.info("Action = delete | Deleting torrent + files")
+                        torrent.delete(delete_files=True)
+                    case _:
+                        logger.warning("Invalid action for delete_not_working_trackers job")
 
                 self.send_discord_notification(torrent_name=name, trackers=trackers)
 

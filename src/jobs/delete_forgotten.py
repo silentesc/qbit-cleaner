@@ -52,8 +52,7 @@ class DeleteForgotten:
                     continue
                 # Ignore torrents seeding less than x days
                 if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
-                    logger.debug(f"Ignoring {name} (seeding less than {CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
-                    logger.trace(f"Seeding days: {seeding_time_days}")
+                    logger.debug(f"Ignoring {name} (seeding {seeding_time_days}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
                     continue
                 # Ignore torrents that have a connection to the media library
                 if file_utils.is_content_in_media_library(content_path=content_path):

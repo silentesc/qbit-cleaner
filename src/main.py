@@ -10,14 +10,18 @@ from src.utils.datetime_utils import DateTimeUtils
 from src.utils.db_scripts import DbScripts
 
 from src.data.config import CONFIG
-from src.data.env import ENV
 
 
 def main() -> int:
     # Logging setup
+    readable_datetime_now: str = DateTimeUtils().get_datetime_readable(datetime.now())
+    custom_log_level: str = CONFIG["logging"]["log_level"]
     logger.remove(0)
-    logger.add(f"/config/logs/{DateTimeUtils().get_datetime_readable(datetime.now())}.log", level=CONFIG["logging"]["log_level"])
-    logger.add(sys.stderr, level=CONFIG["logging"]["log_level"])
+    logger.add(f"/config/logs/{readable_datetime_now}/info.log", level="INFO")
+    logger.add(f"/config/logs/{readable_datetime_now}/debug.log", level="DEBUG")
+    if custom_log_level != "INFO" and custom_log_level != "DEBUG":
+        logger.add(f"/config/logs/{readable_datetime_now}/custom.log", level=custom_log_level)
+    logger.add(sys.stderr, level=custom_log_level)
 
     # Db setup
     DbScripts().create_tables()
