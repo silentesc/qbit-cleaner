@@ -53,7 +53,7 @@ class StrikeUtils:
 
     def cleanup_db(self, hashes: list[str]) -> None:
         with DbManager() as db:
-            rows = db.execute_fetchall(query=f"SELECT hash FROM {self.strike_type}_strikes GROUP BY hash")
+            rows = db.execute_fetchall(query=f"SELECT hash FROM {self.strike_type.value}_strikes GROUP BY hash")
 
         for row in rows:
             torrent_hash = row["hash"]
@@ -78,7 +78,7 @@ class StrikeUtils:
 
     def get_consecutive_days(self) -> int:
         with DbManager() as db:
-            rows = db.execute_fetchall(query=f"SELECT * FROM {self.strike_type}_strikes WHERE hash = ? ORDER BY timestamp DESC", params=(self.torrent_hash,))
+            rows = db.execute_fetchall(query=f"SELECT * FROM {self.strike_type.value}_strikes WHERE hash = ? ORDER BY timestamp DESC", params=(self.torrent_hash,))
 
         if not rows:
             return 0
