@@ -50,13 +50,13 @@ class DeleteForgotten:
                 if completed_on_raw == -1:
                     logger.debug(f"Ignoring {name} (not completed)")
                     continue
-                # Ignore torrents seeding less than x days
-                if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
-                    logger.debug(f"Ignoring {name} (seeding {seeding_time_days}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
-                    continue
                 # Ignore torrents that have a connection to the media library
                 if file_utils.is_content_in_media_library(content_path=content_path):
                     logger.debug(f"Ignoring {name} (has content in media library)")
+                    continue
+                # Ignore torrents seeding less than x days
+                if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
+                    logger.info(f"Found torrent that qualifies forgotten, but ignoring due to not reaching criteria {name} (seeding {seeding_time_days}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
                     continue
 
                 logger.info(f"Found torrent that qualifies forgotten: {name}")
