@@ -20,43 +20,29 @@ class DeleteForgotten:
             username=CONFIG["qbittorrent"]["username"],
             password=CONFIG["qbittorrent"]["password"],
         )
+        self.file_utils = FileUtils(
+            data_path="/data",
+            torrents_path=ENV.get_torrents_path(),
+            media_path=ENV.get_media_path(),
+        )
 
 
     def run(self) -> None:
         logger.info("Running 'delete_forgotten' job")
 
-        with qbittorrentapi.Client(**self.conn_info) as qbt_client:
-            file_utils = FileUtils(
-                data_path="/data",
-                torrents_path=ENV.get_torrents_path(),
-                media_path=ENV.get_media_path(),
-            )
+        not_criteria_matching_content_paths: set[str] = self.get_not_criteria_matching_content_paths()
 
+        with qbittorrentapi.Client(**self.conn_info) as qbt_client:
             for torrent in qbt_client.torrents_info():
                 torrent: TorrentDictionary
                 name: str = torrent.name
-                tags: str = torrent.tags
-                seeding_time_days: int = torrent.seeding_time / 60 / 60 / 24
                 content_path: str = torrent.content_path
-                completed_on_raw: int = torrent.completion_on
 
-                # Ignore protected tags
-                if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
-                    logger.debug(f"Ignoring {name} (has protection a tag)")
-                    logger.trace(f"Tags of {name}: {tags}")
-                    logger.trace(f"Protection tag: {CONFIG["qbittorrent"]["protected_tag"]}")
+                if not self.is_criteria_matching(torrent=torrent):
                     continue
-                # Ignore uncompleted torrents
-                if completed_on_raw == -1:
-                    logger.debug(f"Ignoring {name} (not completed)")
-                    continue
-                # Ignore torrents that have a connection to the media library
-                if file_utils.is_content_in_media_library(content_path=content_path):
-                    logger.debug(f"Ignoring {name} (has content in media library)")
-                    continue
-                # Ignore torrents seeding less than x days
-                if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
-                    logger.info(f"Found torrent that qualifies forgotten, but ignoring due to not reaching criteria {name} (seeding {seeding_time_days}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
+
+                if content_path in not_criteria_matching_content_paths:
+                    logger.info(f"Ignoring {name} Some other torrent that uses these files doesn't match criteria")
                     continue
 
                 logger.info(f"Found torrent that qualifies forgotten: {name}")
@@ -76,6 +62,48 @@ class DeleteForgotten:
                 self.send_discord_notification(embed_title="Found forgotten torrent", torrent=torrent)
 
         logger.info(f"job delete_forgotten finished, next run in {CONFIG["jobs"]["delete_forgotten"]["interval_hours"]} hours")
+
+
+    def get_not_criteria_matching_content_paths(self) -> set[str]:
+        content_paths: list[str] = []
+
+        with qbittorrentapi.Client(**self.conn_info) as qbt_client:
+            for torrent in qbt_client.torrents_info():
+                torrent: TorrentDictionary
+                content_path = torrent.content_path
+                if not self.is_criteria_matching(torrent=torrent):
+                    content_paths.append(content_path)
+
+        return set(content_paths)
+
+
+    def is_criteria_matching(self, torrent: TorrentDictionary) -> bool:
+        name: str = torrent.name
+        tags: str = torrent.tags
+        seeding_time_days: int = torrent.seeding_time / 60 / 60 / 24
+        content_path: str = torrent.content_path
+        completed_on_raw: int = torrent.completion_on
+
+        # Protected tags
+        if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
+            logger.debug(f"{name} doesn't match criteria (has protection a tag)")
+            logger.trace(f"Tags of {name}: {tags}")
+            logger.trace(f"Protection tag: {CONFIG["qbittorrent"]["protected_tag"]}")
+            return True
+        # Uncompleted torrents
+        if completed_on_raw == -1:
+            logger.debug(f"{name} doesn't match criteria (not completed)")
+            return True
+        # Torrents that have a connection to the media library
+        if self.file_utils.is_content_in_media_library(content_path=content_path):
+            logger.debug(f"{name} doesn't match criteria (has content in media library)")
+            return True
+        # Torrents seeding less than x days
+        if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
+            logger.info(f"Found torrent that qualifies forgotten, but ignoring due to not reaching criteria {name} (seeding {seeding_time_days}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
+            return True
+
+        return False
 
 
     def send_discord_notification(self, embed_title: str, torrent: TorrentDictionary) -> None:
