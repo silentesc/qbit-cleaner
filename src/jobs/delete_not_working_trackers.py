@@ -54,10 +54,6 @@ class DeleteNotWorkingTrackers:
                     logger.debug(f"Ignoring {name} (trackers are working)")
                     strike_utils.reset_torrent()
                     continue
-                # Ignore if another working torrent has the same files
-                if content_path in working_content_paths:
-                    logger.info(f"Ignoring {name} Some other torrent that uses these files has working trackers")
-                    continue
                 # Ignore not reaching criteria
                 is_torrent_limit_reached: bool = strike_utils.strike_torrent()
                 if not is_torrent_limit_reached:
@@ -75,7 +71,12 @@ class DeleteNotWorkingTrackers:
                         torrent.stop()
                     case "delete":
                         logger.info("Action = delete | Deleting torrent + files")
-                        torrent.delete(delete_files=True)
+                        # Ignore if another working torrent has the same files
+                        if content_path in working_content_paths:
+                            logger.info(f"Only deleting torrent and not files for {name} Some other torrent that uses these files has working trackers")
+                            torrent.delete(delete_files=False)
+                        else:
+                            torrent.delete(delete_files=True)
                     case _:
                         logger.warning("Invalid action for delete_not_working_trackers job")
 
