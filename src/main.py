@@ -1,9 +1,11 @@
 import sys
 import time
 from datetime import datetime
+from typing import Optional, Callable
 from apscheduler.schedulers.blocking import BlockingScheduler
 from loguru import logger
 
+from src.jobs.delete_orphaned import DeleteOrphaned
 from src.jobs.delete_forgotten import DeleteForgotten
 from src.jobs.delete_not_working_trackers import DeleteNotWorkingTrackers
 from src.utils.datetime_utils import DateTimeUtils
@@ -26,28 +28,31 @@ def main() -> int:
     # Db setup
     DbScripts().create_tables()
 
-    match CONFIG["testing"]["job"]:
-        case "delete_forgotten":
-            logger.info("Testing delete_forgotten")
-            DeleteForgotten().run()
-            logger.info("Testing delete_forgotten finished, sleeping now")
-            while True:
-                time.sleep(1)
-        case "delete_not_working_trackers":
-            logger.info("Testing delete_not_working_trackers")
-            DeleteNotWorkingTrackers().run()
-            logger.info("Testing delete_not_working_trackers finished, sleeping now")
-            while True:
-                time.sleep(1)
+    jobs: dict[str, Callable[[], None]] = {
+        "delete_orphaned": DeleteOrphaned().run,
+        "delete_forgotten": DeleteForgotten().run,
+        "delete_not_working_trackers": DeleteNotWorkingTrackers().run,
+    }
+
+    # Testing
+    testing_job: str | None = CONFIG["testing"]["job"]
+    if testing_job:
+        job_method: Optional[Callable[[], None]] = jobs.get(testing_job)
+        if not job_method:
+            logger.critical(f"Job {CONFIG["testing"]["job"]} does not exist.")
+            return 1
+        logger.info(f"Testing {testing_job}")
+        job_method()
+        logger.info(f"Testing {testing_job} finished, sleeping now")
+        while True:
+            time.sleep(1)
 
     # Job setup
     scheduler = BlockingScheduler()
-    if CONFIG["jobs"]["delete_forgotten"]["interval_hours"] != 0:
-        scheduler.add_job(DeleteForgotten().run, "interval", hours=CONFIG["jobs"]["delete_forgotten"]["interval_hours"])
-        logger.info(f"job delete_forgotten has been added, next run in {CONFIG["jobs"]["delete_forgotten"]["interval_hours"]} hours")
-    if CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"] != 0:
-        scheduler.add_job(DeleteNotWorkingTrackers().run, "interval", hours=CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"])
-        logger.info(f"job delete_not_working_trackers has been added, next run in {CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"]} hours")
+    for job_name, job_method in jobs.items():
+        if CONFIG["jobs"][job_name]["interval_hours"] != 0:
+            scheduler.add_job(job_method, "interval", hours=CONFIG["jobs"][job_name]["interval_hours"])
+            logger.info(f"job {job_name} has been added, next run in {CONFIG["jobs"][job_name]["interval_hours"]} hours")
 
     try:
         logger.info("Startup complete, starting scheduler")

@@ -61,6 +61,14 @@ qbittorrent:
   protected_tag: protected
 
 jobs:
+  delete_orphaned:
+    # Execute this job every x hours, 0 to disable
+    interval_hours: 24
+    # What happens when a orphaned file been found
+    # test - everything works (including notifications) but nothing happens with the file
+    # delete - file will be deleted
+    action: test
+
   delete_forgotten:
     # Execute this job every x hours, 0 to disable
     interval_hours: 24

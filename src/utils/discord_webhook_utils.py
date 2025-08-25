@@ -12,6 +12,7 @@ class EmbedColor(Enum):
     BLUE = 0x697cff
     GREEN = 0x69ff7e
     RED = 0xff8080
+    PURPLE = 0xd880ff
 
 
 class DiscordWebhookUtils:
