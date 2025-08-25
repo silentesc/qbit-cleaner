@@ -104,7 +104,7 @@ class DeleteNotWorkingTrackers:
                 working: bool = any(tracker["status"] == 2 for tracker in trackers)
 
                 if working:
-                    content_paths.append(torrent.content_path)
+                    content_paths.append(content_path)
         return set(content_paths)
 
 
