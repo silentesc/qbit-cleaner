@@ -33,6 +33,7 @@ class DeleteOrphaned:
                 file_count += 1
                 file_path = os.path.join(root, filename)
                 if not file_path in qbit_file_paths:
+                    logger.info(f"Found orphaned file: {file_path}")
                     stats = os.stat(file_path)
                     match CONFIG["jobs"]["delete_orphaned"]["action"]:
                         case "test":
