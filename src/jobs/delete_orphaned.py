@@ -72,7 +72,7 @@ class DeleteOrphaned:
                 embed_color=EmbedColor.PURPLE,
                 title=embed_title,
                 fields=[
-                    { "name": "Action", "value": CONFIG["jobs"]["delete_forgotten"]["action"] },
+                    { "name": "Action", "value": CONFIG["jobs"]["delete_orphaned"]["action"] },
                     { "name": "File", "value": file_path },
                     { "name": "Size", "value": f"{stats.st_size / 1000 / 1000 / 1000}GB" },
                     { "name": "Created", "value": DateTimeUtils().get_datetime_readable(datetime.fromtimestamp(stats.st_ctime)) },
