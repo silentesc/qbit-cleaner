@@ -57,6 +57,7 @@ class DeleteNotWorkingTrackers:
                 # Ignore if another working torrent has the same files
                 if content_path in working_content_paths:
                     logger.debug(f"Ignoring {name} Some other torrent that uses these files has working trackers")
+                    continue
                 # Ignore not reaching criteria
                 is_torrent_limit_reached: bool = strike_utils.strike_torrent()
                 if not is_torrent_limit_reached:
