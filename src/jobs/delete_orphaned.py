@@ -24,7 +24,7 @@ class DeleteOrphaned:
     def run(self) -> None:
         logger.info("Running 'delete_orphaned' job")
 
-        qbit_file_paths: list[str] = self.get_qbit_file_paths()
+        qbit_file_paths: set[str] = self.get_qbit_file_paths()
         logger.debug(f"Found {len(qbit_file_paths)} files in qbittorrent")
 
         file_count = 0
@@ -51,20 +51,16 @@ class DeleteOrphaned:
         logger.info(f"job delete_orphaned finished, next run in {CONFIG["jobs"]["delete_orphaned"]["interval_hours"]} hours")
 
 
-    def get_qbit_file_paths(self) -> list[str]:
+    def get_qbit_file_paths(self) -> set[str]:
         qbit_paths = []
         with qbittorrentapi.Client(**self.conn_info) as qbt_client:
             for torrent in qbt_client.torrents_info():
                 if os.path.isfile(torrent.content_path):
                     qbit_paths.append(torrent.content_path)
                     continue
-                for root, _, files in os.walk(torrent.content_path):
-                    for filename in files:
-                        file_path = os.path.join(root, filename)
-                        if file_path in qbit_paths:
-                            continue
-                        qbit_paths.append(file_path)
-        return qbit_paths
+                files = [f"{torrent.content_path}/{"/".join(str(file.name).split("/")[1:])}" for file in torrent.files]
+                qbit_paths.extend(files)
+        return set(qbit_paths)
 
 
     def send_discord_notification(self, embed_title: str, file_path: str, stats: os.stat_result) -> None:
