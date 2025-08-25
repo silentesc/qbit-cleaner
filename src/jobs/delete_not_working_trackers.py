@@ -22,10 +22,13 @@ class DeleteNotWorkingTrackers:
     def run(self) -> None:
         logger.info("Running 'delete_not_working_trackers' job")
 
+        working_content_paths: set[str] = self.get_working_content_paths()
+
         with qbittorrentapi.Client(**self.conn_info) as qbt_client:
             for torrent in qbt_client.torrents_info():
                 torrent: TorrentDictionary
                 name: str = torrent.name
+                content_path: str = torrent.content_path
                 hash = torrent.hash
                 tags: str = torrent.tags
                 trackers: TrackersList = qbt_client.torrents_trackers(torrent.hash)
@@ -38,7 +41,7 @@ class DeleteNotWorkingTrackers:
                 working: bool = any(tracker["status"] == 2 for tracker in trackers)
 
                 strike_utils = StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
-                
+
                 # Ignore protected tags
                 if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
                     logger.debug(f"Ignoring {name} (has protection a tag)")
@@ -51,6 +54,9 @@ class DeleteNotWorkingTrackers:
                     logger.debug(f"Ignoring {name} (trackers are working)")
                     strike_utils.reset_torrent()
                     continue
+                # Ignore if another working torrent has the same files
+                if content_path in working_content_paths:
+                    logger.debug(f"Ignoring {name} Some other torrent that uses these files has working trackers")
                 # Ignore not reaching criteria
                 is_torrent_limit_reached: bool = strike_utils.strike_torrent()
                 if not is_torrent_limit_reached:
@@ -79,6 +85,26 @@ class DeleteNotWorkingTrackers:
             StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash="unused").cleanup_db(hashes=hashes)
 
         logger.info(f"job delete_not_working_trackers finished, next run in {CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"]} hours")
+
+
+    def get_working_content_paths(self) -> set[str]:
+        content_paths: list[str] = []
+        with qbittorrentapi.Client(**self.conn_info) as qbt_client:
+            for torrent in qbt_client.torrents_info():
+                torrent: TorrentDictionary
+                content_path = torrent.content_path
+                trackers: TrackersList = qbt_client.torrents_trackers(torrent.hash)
+
+                # 0 = Disabled
+                # 1 = Not contacted yet
+                # 2 = Working
+                # 3 = Updating
+                # 4 = Not working
+                working: bool = any(tracker["status"] == 2 for tracker in trackers)
+
+                if working:
+                    content_paths.append(torrent.content_path)
+        return set(content_paths)
 
 
     def get_tracker_infos(self, name: str, trackers: TrackersList) -> list[str]:
