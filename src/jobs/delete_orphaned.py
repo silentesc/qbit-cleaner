@@ -32,6 +32,7 @@ class DeleteOrphaned:
             for filename in files:
                 file_count += 1
                 file_path = os.path.join(root, filename)
+                # If this happens, the file is not in qbittorrent anymore and can be deleted since no other torrent uses it bc then it would be in qbit_file_paths
                 if not file_path in qbit_file_paths:
                     logger.info(f"Found orphaned file: {file_path}")
                     stats = os.stat(file_path)
