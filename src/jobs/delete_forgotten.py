@@ -41,10 +41,6 @@ class DeleteForgotten:
                 if not self.is_criteria_matching(torrent=torrent):
                     continue
 
-                if content_path in not_criteria_matching_content_paths:
-                    logger.info(f"Ignoring {name} Some other torrent that uses these files doesn't match criteria")
-                    continue
-
                 logger.info(f"Found torrent that qualifies forgotten: {name}")
 
                 match CONFIG["jobs"]["delete_forgotten"]["action"]:
@@ -55,7 +51,11 @@ class DeleteForgotten:
                         torrent.stop()
                     case "delete":
                         logger.info("Action = delete | Deleting torrent + files")
-                        torrent.delete(delete_files=True)
+                        if content_path in not_criteria_matching_content_paths:
+                            logger.info(f"Only deleting torrent and not files for {name} Some other torrent that uses these files doesn't match criteria")
+                            torrent.delete(delete_files=False)
+                        else:
+                            torrent.delete(delete_files=True)
                     case _:
                         logger.warning("Invalid action for delete_forgotten job")
 
