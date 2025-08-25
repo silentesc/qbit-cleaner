@@ -89,21 +89,21 @@ class DeleteForgotten:
             logger.debug(f"{name} doesn't match criteria (has protection a tag)")
             logger.trace(f"Tags of {name}: {tags}")
             logger.trace(f"Protection tag: {CONFIG["qbittorrent"]["protected_tag"]}")
-            return True
+            return False
         # Uncompleted torrents
         if completed_on_raw == -1:
             logger.debug(f"{name} doesn't match criteria (not completed)")
-            return True
+            return False
         # Torrents that have a connection to the media library
         if self.file_utils.is_content_in_media_library(content_path=content_path):
             logger.debug(f"{name} doesn't match criteria (has content in media library)")
-            return True
+            return False
         # Torrents seeding less than x days
         if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
             logger.info(f"Found torrent that qualifies forgotten, but ignoring due to not reaching criteria {name} (seeding {seeding_time_days}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
-            return True
+            return False
 
-        return False
+        return True
 
 
     def send_discord_notification(self, embed_title: str, torrent: TorrentDictionary) -> None:
