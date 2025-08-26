@@ -59,7 +59,7 @@ class DeleteNotWorkingTrackers:
                 if not is_torrent_limit_reached:
                     required_strikes = CONFIG["jobs"]["delete_not_working_trackers"]["required_strikes"]
                     min_not_working_days = CONFIG["jobs"]["delete_not_working_trackers"]["min_not_working_days"]
-                    logger.info(f"{name} has no working trackers but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_not_working_days} days)")
+                    logger.debug(f"{name} has no working trackers but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_not_working_days} days)")
                     continue
 
                 logger.info(f"Found torrent without working trackers that matches criteria: {name}")
@@ -73,7 +73,7 @@ class DeleteNotWorkingTrackers:
                         logger.info("Action = delete | Deleting torrent + files")
                         # Ignore if another working torrent has the same files
                         if content_path in working_content_paths:
-                            logger.info(f"Only deleting torrent and not files for {name} Some other torrent that uses these files has working trackers")
+                            logger.warning(f"Only deleting torrent and not files for {name} Some other torrent that uses these files has working trackers")
                             torrent.delete(delete_files=False)
                         else:
                             torrent.delete(delete_files=True)

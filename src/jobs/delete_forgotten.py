@@ -52,7 +52,7 @@ class DeleteForgotten:
                     case "delete":
                         logger.info("Action = delete | Deleting torrent + files")
                         if content_path in not_criteria_matching_content_paths:
-                            logger.info(f"Only deleting torrent and not files for {name} Some other torrent that uses these files doesn't match criteria")
+                            logger.warning(f"Only deleting torrent and not files for {name} Some other torrent that uses these files doesn't match criteria")
                             torrent.delete(delete_files=False)
                         else:
                             torrent.delete(delete_files=True)
@@ -100,7 +100,7 @@ class DeleteForgotten:
             return False
         # Torrents seeding less than x days
         if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
-            logger.info(f"Found torrent that qualifies forgotten, but ignoring due to not reaching criteria {name} (seeding {seeding_time_days}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
+            logger.debug(f"Found torrent that qualifies forgotten, but ignoring due to not reaching criteria {name} (seeding {seeding_time_days}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
             return False
 
         return True
