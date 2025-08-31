@@ -6,6 +6,7 @@ from loguru import logger
 
 from src.utils.datetime_utils import DateTimeUtils
 from src.utils.discord_webhook_utils import DiscordWebhookUtils, EmbedColor
+from src.utils.file_utils import FileUtils
 
 from src.data.env import ENV
 from src.data.config import CONFIG
@@ -19,6 +20,11 @@ class DeleteOrphaned:
             username=CONFIG["qbittorrent"]["username"],
             password=CONFIG["qbittorrent"]["password"],
         )
+        self.file_utils = FileUtils(
+            data_path="/data",
+            torrents_path=ENV.get_torrents_path(),
+            media_path=ENV.get_media_path(),
+        )
 
 
     def run(self) -> None:
@@ -27,6 +33,13 @@ class DeleteOrphaned:
         qbit_file_paths: set[str] = self.get_qbit_file_paths()
         logger.debug(f"Found {len(qbit_file_paths)} files in qbittorrent")
 
+        self.handle_orphaned_files(qbit_file_paths=qbit_file_paths)
+        self.handle_orphaned_empty_dirs(qbit_file_paths=qbit_file_paths)
+
+        logger.info(f"job delete_orphaned finished, next run in {CONFIG["jobs"]["delete_orphaned"]["interval_hours"]} hours")
+
+
+    def handle_orphaned_files(self, qbit_file_paths: set[str]) -> None:
         file_count = 0
         for root, _, files in os.walk(ENV.get_torrents_path()):
             for filename in files:
@@ -44,13 +57,29 @@ class DeleteOrphaned:
                             os.remove(file_path)
                         case _:
                             logger.warning("Invalid action for delete_orphaned job")
-                    self.send_discord_notification(embed_title="Found orphaned torrent", file_path=file_path, stats=stats)
+                    self.send_discord_notification(embed_title="Found orphaned files", file_path=file_path, stats=stats)
         logger.debug(f"Found {file_count} files in torrent folder")
 
         if len(qbit_file_paths) != file_count:
             logger.warning(f"qbittorrent file count does not match torrent folder file count ({len(qbit_file_paths)} != {file_count})")
 
-        logger.info(f"job delete_orphaned finished, next run in {CONFIG["jobs"]["delete_orphaned"]["interval_hours"]} hours")
+
+    def handle_orphaned_empty_dirs(self, qbit_file_paths: set[str]) -> None:
+        for dirpath in self.file_utils.get_empty_dirs():
+            if dirpath in qbit_file_paths:
+                logger.debug(f"{dirpath} is in qbit_file_paths, ignoring it")
+                continue
+            logger.info(f"Found orphaned dir: {dirpath}")
+            stats = os.stat(dirpath)
+            match CONFIG["jobs"]["delete_orphaned"]["action"]:
+                case "test":
+                    logger.info("Action = test | Doing nothing")
+                case "delete":
+                    logger.info("Action = delete | Deleting dir")
+                    os.rmdir(dirpath)
+                case _:
+                    logger.warning("Invalid action for delete_orphaned job")
+            self.send_discord_notification(embed_title="Found empty orphaned dir", file_path=dirpath, stats=stats)
 
 
     def get_qbit_file_paths(self) -> set[str]:
@@ -72,7 +101,7 @@ class DeleteOrphaned:
                 fields=[
                     { "name": "Action", "value": CONFIG["jobs"]["delete_orphaned"]["action"] },
                     { "name": "File", "value": file_path },
-                    { "name": "Size", "value": f"{stats.st_size / 1000 / 1000 / 1000}GB" },
+                    { "name": "Size", "value": f"{round(stats.st_size / 1000 / 1000 / 1000, 2)}GB" },
                     { "name": "Created", "value": DateTimeUtils().get_datetime_readable(datetime.fromtimestamp(stats.st_ctime)) },
                     { "name": "Modified", "value": DateTimeUtils().get_datetime_readable(datetime.fromtimestamp(stats.st_mtime)) },
                 ]
