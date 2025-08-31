@@ -1,3 +1,4 @@
+import signal
 import sys
 import time
 from datetime import datetime
@@ -15,6 +16,11 @@ from src.data.config import CONFIG
 
 
 def main() -> int:
+    def shutdown(signum, frame):
+        logger.info("Shutting down scheduler...")
+        scheduler.shutdown(wait=True)
+        return 0
+
     # Logging setup
     readable_datetime_now: str = DateTimeUtils().get_datetime_readable(datetime.now())
     custom_log_level: str = CONFIG["logging"]["log_level"]
@@ -53,6 +59,9 @@ def main() -> int:
         if CONFIG["jobs"][job_name]["interval_hours"] != 0:
             scheduler.add_job(job_method, "interval", hours=CONFIG["jobs"][job_name]["interval_hours"])
             logger.info(f"job {job_name} has been added, next run in {CONFIG["jobs"][job_name]["interval_hours"]} hours")
+
+    signal.signal(signal.SIGTERM, shutdown)
+    signal.signal(signal.SIGINT, shutdown)
 
     try:
         logger.info("Startup complete, starting scheduler")
