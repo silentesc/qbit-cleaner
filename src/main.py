@@ -20,6 +20,7 @@ def main() -> int:
         return 0
 
     # Logging setup
+    logger.debug("Setting up custom logger")
     logger.remove(0)
     logger.add(
         sys.stdout,
@@ -29,6 +30,7 @@ def main() -> int:
         backtrace=True,
         diagnose=False
     )
+    logger.debug("Custom logger has been set up")
 
     # Db setup
     DbScripts().create_tables()
