@@ -1,7 +1,6 @@
 import signal
 import sys
 import time
-from datetime import datetime
 from typing import Optional, Callable
 from apscheduler.schedulers.blocking import BlockingScheduler
 from loguru import logger
@@ -9,7 +8,6 @@ from loguru import logger
 from src.jobs.delete_orphaned import DeleteOrphaned
 from src.jobs.delete_forgotten import DeleteForgotten
 from src.jobs.delete_not_working_trackers import DeleteNotWorkingTrackers
-from src.utils.datetime_utils import DateTimeUtils
 from src.utils.db_scripts import DbScripts
 
 from src.data.config import CONFIG
@@ -23,7 +21,14 @@ def main() -> int:
 
     # Logging setup
     logger.remove(0)
-    logger.add(sys.stderr, level=CONFIG["logging"]["log_level"], colorize=True)
+    logger.add(
+        sys.stdout,
+        level=CONFIG["logging"]["log_level"],
+        format=("[{time:YYYY-MM-DD HH:mm:ss}] [<level>{level}</level>]: {message}"),
+        colorize=True,
+        backtrace=True,
+        diagnose=False
+    )
 
     # Db setup
     DbScripts().create_tables()
