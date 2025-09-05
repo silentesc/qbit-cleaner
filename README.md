@@ -1,27 +1,10 @@
-# !!! IN ACTIVE DEVELOPMENT !!!
-
 # How to install
-This has to be done everytime you want to update
-
-### Clone repository
-```bash
-git clone https://github.com/silentesc/qbit-cleaner.git
-```
-
-### Build image
-```bash
-cd qbit-cleaner
-```
-
-```bash
-docker build -t qbit-cleaner .
-```
 
 ### Docker Compose
 ```yaml
 services:
   qbit-cleaner:
-    image: qbit-cleaner
+    image: silentesc/qbit-cleaner:latest
     container_name: qbit-cleaner
     environment:
       - PUID=1000
@@ -63,7 +46,7 @@ qbittorrent:
 jobs:
   delete_orphaned:
     # Execute this job every x hours, 0 to disable
-    interval_hours: 24
+    interval_hours: 11
     # What happens when a orphaned file been found
     # test - everything works (including notifications) but nothing happens with the file
     # delete - file will be deleted
@@ -71,7 +54,7 @@ jobs:
 
   delete_forgotten:
     # Execute this job every x hours, 0 to disable
-    interval_hours: 24
+    interval_hours: 10
     # The minimum amount of days a torrent had to be seeding before getting deleted
     min_seeding_days: 20
     # What happens when a forgotten torrent has been found
@@ -82,7 +65,7 @@ jobs:
 
   delete_not_working_trackers:
     # Execute this job every x hours, 0 to disable
-    interval_hours: 1
+    interval_hours: 3
     # The minimum amount of days the trackers has to be not working before getting deleted
     # If the trackers work in the meantime, it resets the days counter
     min_not_working_days: 7
