@@ -30,9 +30,11 @@ class DeleteForgotten:
     def run(self) -> None:
         logger.info("Running 'delete_forgotten' job")
 
+        logger.trace("Getting not_criteria_matching_content_paths")
         not_criteria_matching_content_paths: set[str] = self.get_not_criteria_matching_content_paths()
 
         with qbittorrentapi.Client(**self.conn_info) as qbt_client:
+            logger.trace("Checking torrents")
             for torrent in qbt_client.torrents_info():
                 torrent: TorrentDictionary
                 name: str = torrent.name

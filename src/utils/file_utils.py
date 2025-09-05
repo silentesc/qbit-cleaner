@@ -97,7 +97,7 @@ class FileUtils:
                 else:
                     logger.trace(f"{content_path} does not have hard links")
         else:
-            logger.warning(f"Not a dir or file? {content_path}")
+            logger.warning(f"Not a dir or file, probably be deleted: {content_path}")
         return False
 
 
