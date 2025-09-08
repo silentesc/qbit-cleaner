@@ -58,9 +58,9 @@ jobs:
     # The minimum amount of days a torrent had to be seeding before getting deleted
     min_seeding_days: 20
     # The minimum amount of days the torrent has to be forgotten before getting deleted
-    min_strike_days: 0
+    min_strike_days: 3
     # The minimum amount of strikes the torrent has to get before getting deleted
-    required_strikes: 0
+    required_strikes: 3
     # What happens when a forgotten torrent has been found
     # test - everything works (including notifications) but nothing happens with the torrent
     # stop - Torrent will be stopped
