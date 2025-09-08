@@ -49,7 +49,7 @@ class StrikeUtils:
             row = db.execute_fetchone(query=f"SELECT * FROM {self.strike_type.value}_strikes WHERE hash = ?", params=(self.torrent_hash,))
             if not row:
                 return
-            logger.trace(f"Torrent with hash {self.torrent_hash} is being deleted")
+            logger.trace(f"Torrent with hash {self.torrent_hash} is being deleted from db due to reset")
             db.execute(query=f"DELETE FROM {self.strike_type.value}_strikes WHERE hash = ?", params=(self.torrent_hash,))
 
 
