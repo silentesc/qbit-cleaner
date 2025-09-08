@@ -7,6 +7,7 @@ from loguru import logger
 from src.utils.file_utils import FileUtils
 from src.utils.datetime_utils import DateTimeUtils
 from src.utils.discord_webhook_utils import DiscordWebhookUtils, EmbedColor
+from src.utils.strike_utils import StrikeUtils, StrikeType
 
 from src.data.env import ENV
 from src.data.config import CONFIG
@@ -37,10 +38,23 @@ class DeleteForgotten:
             logger.trace("Checking torrents")
             for torrent in qbt_client.torrents_info():
                 torrent: TorrentDictionary
+                hash: str = torrent.hash
                 name: str = torrent.name
                 content_path: str = torrent.content_path
 
+                strike_utils = StrikeUtils(strike_type=StrikeType.DELETE_FORGOTTEN, torrent_hash=hash)
+
+                # Ignore if criteria not matching
                 if not self.is_criteria_matching(torrent=torrent):
+                    strike_utils.reset_torrent()
+                    continue
+
+                # Strike torrent and check if limit reached
+                is_torrent_limit_reached: bool = strike_utils.strike_torrent()
+                if not is_torrent_limit_reached:
+                    required_strikes = CONFIG["jobs"]["delete_forgotten"]["required_strikes"]
+                    min_strike_days = CONFIG["jobs"]["delete_forgotten"]["min_strike_days"]
+                    logger.debug(f"{name} is forgotten but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days)")
                     continue
 
                 logger.info(f"Found torrent that qualifies forgotten: {name}")
@@ -62,6 +76,9 @@ class DeleteForgotten:
                         logger.warning("Invalid action for delete_forgotten job")
 
                 self.send_discord_notification(embed_title="Found forgotten torrent", torrent=torrent)
+
+            hashes = [torrent.hash for torrent in qbt_client.torrents_info()]
+            StrikeUtils(strike_type=StrikeType.DELETE_FORGOTTEN, torrent_hash="unused").cleanup_db(hashes=hashes)
 
         logger.info(f"job delete_forgotten finished, next run in {CONFIG["jobs"]["delete_forgotten"]["interval_hours"]} hours")
 
