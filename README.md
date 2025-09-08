@@ -57,6 +57,10 @@ jobs:
     interval_hours: 10
     # The minimum amount of days a torrent had to be seeding before getting deleted
     min_seeding_days: 20
+    # The minimum amount of days the torrent has to be forgotten before getting deleted
+    min_strike_days: 0
+    # The minimum amount of strikes the torrent has to get before getting deleted
+    required_strikes: 0
     # What happens when a forgotten torrent has been found
     # test - everything works (including notifications) but nothing happens with the torrent
     # stop - Torrent will be stopped
@@ -68,7 +72,7 @@ jobs:
     interval_hours: 3
     # The minimum amount of days the trackers has to be not working before getting deleted
     # If the trackers work in the meantime, it resets the days counter
-    min_not_working_days: 7
+    min_strike_days: 7
     # The minimum amount of strikes the torrent has to get before getting deleted
     # If the trackers work in the meantime, it resets the strikes counter
     required_strikes: 10
