@@ -8,6 +8,8 @@ from src.data.config import CONFIG
 
 class StrikeType(Enum):
     DELETE_NOT_WORKING_TRACKERS = "delete_not_working_trackers"
+    DELETE_FORGOTTEN = "delete_forgotten"
+    DELETE_ORPHANED = "delete_orphaned"
 
 
 class StrikeUtils:
@@ -18,7 +20,7 @@ class StrikeUtils:
 
     def strike_torrent(self) -> bool:
         """
-        Strikes a torrent while keeping the MIN_NOT_WORKING_DAYS and REQUIRED_STRIKES in mind
+        Strikes a torrent while keeping the min days and required strikes in mind
 
         Returns:
             bool: True if limit has been reached, false otherwise
@@ -33,7 +35,7 @@ class StrikeUtils:
         consecutively_days: int = self.get_consecutive_days()
 
         # If required strikes and min not working days are reached, delete torrent and return true
-        if strikes >= CONFIG["jobs"][self.strike_type.value]["required_strikes"] and consecutively_days >= CONFIG["jobs"][self.strike_type.value]["min_not_working_days"]:
+        if strikes >= CONFIG["jobs"][self.strike_type.value]["required_strikes"] and consecutively_days >= CONFIG["jobs"][self.strike_type.value]["min_strike_days"]:
             logger.trace(f"Torrent with hash {self.torrent_hash} has reached {strikes} strikes in {consecutively_days} days - entry is being deleted")
             self.reset_torrent()
             return True

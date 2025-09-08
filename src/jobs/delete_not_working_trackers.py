@@ -58,8 +58,8 @@ class DeleteNotWorkingTrackers:
                 is_torrent_limit_reached: bool = strike_utils.strike_torrent()
                 if not is_torrent_limit_reached:
                     required_strikes = CONFIG["jobs"]["delete_not_working_trackers"]["required_strikes"]
-                    min_not_working_days = CONFIG["jobs"]["delete_not_working_trackers"]["min_not_working_days"]
-                    logger.debug(f"{name} has no working trackers but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_not_working_days} days)")
+                    min_strike_days = CONFIG["jobs"]["delete_not_working_trackers"]["min_strike_days"]
+                    logger.debug(f"{name} has no working trackers but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days)")
                     continue
 
                 logger.info(f"Found torrent without working trackers that matches criteria: {name}")
