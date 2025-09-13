@@ -119,7 +119,7 @@ class DeleteForgotten:
             return False
         # Torrents seeding less than x days
         if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
-            logger.debug(f"Found torrent that qualifies forgotten, but ignoring due to not reaching criteria {name} (seeding {seeding_time_days}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
+            logger.debug(f"Found torrent that qualifies forgotten, but ignoring due to not reaching criteria {name} (seeding {round(seeding_time_days, 2)}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
             return False
 
         return True
