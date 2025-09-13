@@ -34,13 +34,16 @@ class StrikeUtils:
         strikes: int = self.get_strikes()
         consecutively_days: int = self.get_consecutive_days()
 
+        required_strikes = CONFIG["jobs"][self.strike_type.value]["required_strikes"]
+        min_strike_days = CONFIG["jobs"][self.strike_type.value]["min_strike_days"]
+
         # If required strikes and min not working days are reached, delete torrent and return true
-        if strikes >= CONFIG["jobs"][self.strike_type.value]["required_strikes"] and consecutively_days >= CONFIG["jobs"][self.strike_type.value]["min_strike_days"]:
+        if strikes >= required_strikes and consecutively_days >= min_strike_days:
             logger.trace(f"Torrent with hash {self.torrent_hash} has reached {strikes} strikes in {consecutively_days} days - entry is being deleted")
             self.reset_torrent()
             return True
 
-        logger.trace(f"Torrent with hash {self.torrent_hash} has not reached it's limit ({strikes} strikes, {consecutively_days} days)")
+        logger.trace(f"Torrent with hash {self.torrent_hash} has not reached it's limit ({strikes}/{required_strikes} strikes, {consecutively_days}/{min_strike_days} days)")
         return False
 
 

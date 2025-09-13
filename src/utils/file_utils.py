@@ -99,13 +99,3 @@ class FileUtils:
         else:
             logger.warning(f"Not a dir or file, probably be deleted: {content_path}")
         return False
-
-
-    def get_empty_dirs(self):
-        empty_dirs = []
-        for dirpath, dirnames, filenames in os.walk(self.torrents_path, topdown=False):
-            if dirpath == self.torrents_path:
-                continue
-            if not filenames and all(os.path.join(dirpath, d) in empty_dirs for d in dirnames):
-                empty_dirs.append(dirpath)
-        return empty_dirs

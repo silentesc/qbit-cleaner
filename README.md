@@ -47,6 +47,10 @@ jobs:
   delete_orphaned:
     # Execute this job every x hours, 0 to disable
     interval_hours: 11
+    # The minimum amount of days the files have to be orphaned before getting deleted
+    min_strike_days: 3
+    # The minimum amount of strikes the files have to get before getting deleted
+    required_strikes: 3
     # What happens when a orphaned file been found
     # test - everything works (including notifications) but nothing happens with the file
     # delete - file will be deleted

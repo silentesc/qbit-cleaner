@@ -6,10 +6,9 @@ from loguru import logger
 
 from src.utils.datetime_utils import DateTimeUtils
 from src.utils.discord_webhook_utils import DiscordWebhookUtils, EmbedColor
-from src.utils.file_utils import FileUtils
+from src.utils.strike_utils import StrikeUtils, StrikeType
 
 from src.data.env import ENV
-from src.data.constants import DATA_FOLDER_PATH
 from src.data.config import CONFIG
 
 
@@ -21,66 +20,60 @@ class DeleteOrphaned:
             username=CONFIG["qbittorrent"]["username"],
             password=CONFIG["qbittorrent"]["password"],
         )
-        self.file_utils = FileUtils(
-            data_path=DATA_FOLDER_PATH,
-            torrents_path=ENV.get_torrents_path(),
-            media_path=ENV.get_media_path(),
-        )
 
 
     def run(self) -> None:
+        def handle_path(path: str, is_file: bool) -> None:
+            if path in qbit_file_paths:
+                logger.debug(f"{path} is in qbit_file_paths, ignoring it")
+                return
+            if not is_file and len(os.listdir(path)) != 0:
+                logger.debug(f"{path} is not empty, ignoring it")
+                return
+            orphaned_paths.append(path)
+            strike_utils = StrikeUtils(strike_type=StrikeType.DELETE_ORPHANED, torrent_hash=path)
+            if not strike_utils.strike_torrent():
+                required_strikes = CONFIG["jobs"]["delete_orphaned"]["required_strikes"]
+                min_strike_days = CONFIG["jobs"]["delete_orphaned"]["min_strike_days"]
+                logger.debug(f"{path} is orphaned but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days)")
+                return
+            logger.info(f"Found orphaned {"file" if is_file else "dir"}: {path}")
+            stats = os.stat(path)
+            self.take_action(is_file=is_file, path=path)
+            self.send_discord_notification(embed_title=f"Found orphaned {"file" if is_file else "dir"}", file_path=path, stats=stats)
+
         logger.info("Running 'delete_orphaned' job")
 
         qbit_file_paths: set[str] = self.get_qbit_file_paths()
         logger.debug(f"Found {len(qbit_file_paths)} files in qbittorrent")
 
-        self.handle_orphaned_files(qbit_file_paths=qbit_file_paths)
-        self.handle_orphaned_empty_dirs(qbit_file_paths=qbit_file_paths)
+        orphaned_paths = []
+
+        for root, dirnames, filenames in os.walk(ENV.get_torrents_path(), topdown=False):
+            for filename in filenames:
+                file_path = os.path.join(root, filename)
+                handle_path(path=file_path, is_file=True)
+            for dirname in dirnames:
+                dirpath = os.path.join(root, dirname)
+                handle_path(path=dirpath, is_file=False)
+
+        StrikeUtils(strike_type=StrikeType.DELETE_ORPHANED, torrent_hash="unused").cleanup_db(hashes=orphaned_paths)
 
         logger.info(f"job delete_orphaned finished, next run in {CONFIG["jobs"]["delete_orphaned"]["interval_hours"]} hours")
 
 
-    def handle_orphaned_files(self, qbit_file_paths: set[str]) -> None:
-        file_count = 0
-        for root, _, files in os.walk(ENV.get_torrents_path()):
-            for filename in files:
-                file_count += 1
-                file_path = os.path.join(root, filename)
-                # If this happens, the file is not in qbittorrent anymore and can be deleted since no other torrent uses it bc then it would be in qbit_file_paths
-                if not file_path in qbit_file_paths:
-                    logger.info(f"Found orphaned file: {file_path}")
-                    stats = os.stat(file_path)
-                    match CONFIG["jobs"]["delete_orphaned"]["action"]:
-                        case "test":
-                            logger.info("Action = test | Doing nothing")
-                        case "delete":
-                            logger.info("Action = delete | Deleting files")
-                            os.remove(file_path)
-                        case _:
-                            logger.warning("Invalid action for delete_orphaned job")
-                    self.send_discord_notification(embed_title="Found orphaned files", file_path=file_path, stats=stats)
-        logger.debug(f"Found {file_count} files in torrent folder")
-
-        if len(qbit_file_paths) != file_count:
-            logger.warning(f"qbittorrent file count does not match torrent folder file count ({len(qbit_file_paths)} != {file_count})")
-
-
-    def handle_orphaned_empty_dirs(self, qbit_file_paths: set[str]) -> None:
-        for dirpath in self.file_utils.get_empty_dirs():
-            if dirpath in qbit_file_paths:
-                logger.debug(f"{dirpath} is in qbit_file_paths, ignoring it")
-                continue
-            logger.info(f"Found orphaned dir: {dirpath}")
-            stats = os.stat(dirpath)
-            match CONFIG["jobs"]["delete_orphaned"]["action"]:
-                case "test":
-                    logger.info("Action = test | Doing nothing")
-                case "delete":
-                    logger.info("Action = delete | Deleting dir")
-                    os.rmdir(dirpath)
-                case _:
-                    logger.warning("Invalid action for delete_orphaned job")
-            self.send_discord_notification(embed_title="Found empty orphaned dir", file_path=dirpath, stats=stats)
+    def take_action(self, is_file: bool, path: str) -> None:
+        match CONFIG["jobs"]["delete_orphaned"]["action"]:
+            case "test":
+                logger.info("Action = test | Doing nothing")
+            case "delete":
+                logger.info("Action = delete | Deleting files")
+                if is_file:
+                    os.remove(path)
+                else:
+                    os.rmdir(path)
+            case _:
+                logger.warning("Invalid action for delete_orphaned job")
 
 
     def get_qbit_file_paths(self) -> set[str]:
