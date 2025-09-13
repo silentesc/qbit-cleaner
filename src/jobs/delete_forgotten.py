@@ -110,7 +110,7 @@ class DeleteForgotten:
         return True
 
 
-    def take_action(self, torrent: TorrentDictionary, content_path: str, not_criteria_matching_content_paths: set[str]):
+    def take_action(self, torrent: TorrentDictionary, content_path: str, not_criteria_matching_content_paths: set[str]) -> None:
         match CONFIG["jobs"]["delete_forgotten"]["action"]:
             case "test":
                 logger.info("Action = test | Torrent remains unhandled")
