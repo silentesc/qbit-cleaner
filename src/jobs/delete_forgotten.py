@@ -10,6 +10,7 @@ from src.utils.discord_webhook_utils import DiscordWebhookUtils, EmbedColor
 from src.utils.strike_utils import StrikeUtils, StrikeType
 
 from src.data.env import ENV
+from src.data.constants import DATA_FOLDER_PATH
 from src.data.config import CONFIG
 
 
@@ -22,7 +23,7 @@ class DeleteForgotten:
             password=CONFIG["qbittorrent"]["password"],
         )
         self.file_utils = FileUtils(
-            data_path="/data",
+            data_path=DATA_FOLDER_PATH,
             torrents_path=ENV.get_torrents_path(),
             media_path=ENV.get_media_path(),
         )
@@ -58,23 +59,7 @@ class DeleteForgotten:
                     continue
 
                 logger.info(f"Found torrent that qualifies forgotten: {name}")
-
-                match CONFIG["jobs"]["delete_forgotten"]["action"]:
-                    case "test":
-                        logger.info("Action = test | Torrent remains unhandled")
-                    case "stop":
-                        logger.info("Action = stop | Stopping torrent")
-                        torrent.stop()
-                    case "delete":
-                        logger.info("Action = delete | Deleting torrent + files")
-                        if content_path in not_criteria_matching_content_paths:
-                            logger.warning(f"Only deleting torrent and not files for {name} Some other torrent that uses these files doesn't match criteria")
-                            torrent.delete(delete_files=False)
-                        else:
-                            torrent.delete(delete_files=True)
-                    case _:
-                        logger.warning("Invalid action for delete_forgotten job")
-
+                self.take_action(torrent=torrent, content_path=content_path, not_criteria_matching_content_paths=not_criteria_matching_content_paths)
                 self.send_discord_notification(embed_title="Found forgotten torrent", torrent=torrent)
 
             hashes = [torrent.hash for torrent in qbt_client.torrents_info()]
@@ -123,6 +108,24 @@ class DeleteForgotten:
             return False
 
         return True
+
+
+    def take_action(self, torrent: TorrentDictionary, content_path: str, not_criteria_matching_content_paths: set[str]):
+        match CONFIG["jobs"]["delete_forgotten"]["action"]:
+            case "test":
+                logger.info("Action = test | Torrent remains unhandled")
+            case "stop":
+                logger.info("Action = stop | Stopping torrent")
+                torrent.stop()
+            case "delete":
+                logger.info("Action = delete | Deleting torrent + files")
+                if content_path in not_criteria_matching_content_paths:
+                    logger.warning(f"Only deleting torrent and not files for {torrent.name} Some other torrent that uses these files doesn't match criteria")
+                    torrent.delete(delete_files=False)
+                else:
+                    torrent.delete(delete_files=True)
+            case _:
+                logger.warning("Invalid action for delete_forgotten job")
 
 
     def send_discord_notification(self, embed_title: str, torrent: TorrentDictionary) -> None:

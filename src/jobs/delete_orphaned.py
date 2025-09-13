@@ -9,6 +9,7 @@ from src.utils.discord_webhook_utils import DiscordWebhookUtils, EmbedColor
 from src.utils.file_utils import FileUtils
 
 from src.data.env import ENV
+from src.data.constants import DATA_FOLDER_PATH
 from src.data.config import CONFIG
 
 
@@ -21,7 +22,7 @@ class DeleteOrphaned:
             password=CONFIG["qbittorrent"]["password"],
         )
         self.file_utils = FileUtils(
-            data_path="/data",
+            data_path=DATA_FOLDER_PATH,
             torrents_path=ENV.get_torrents_path(),
             media_path=ENV.get_media_path(),
         )

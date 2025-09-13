@@ -1,7 +1,7 @@
 import sqlite3
 from typing import Any, List, Optional, Tuple
 
-from src.data.constants import data_file_path
+from src.data.constants import DATA_FILE_PATH
 
 
 class DbManager:
@@ -9,7 +9,7 @@ class DbManager:
         self.conn: Optional[sqlite3.Connection] = None
 
     def __enter__(self) -> "DbManager":
-        self.conn = sqlite3.connect(data_file_path)
+        self.conn = sqlite3.connect(DATA_FILE_PATH)
         self.conn.row_factory = sqlite3.Row
         return self
 
