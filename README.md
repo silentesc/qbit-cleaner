@@ -1,3 +1,8 @@
+# Prerequirements
+- Have the torrents and media library on the same filesystem (needed for hardlinking)
+- Use only hardlinks (not symlinks etc.) or you risk deleting data you want to keep
+- Have a parent folder with torrents/media folder inside (e.g. /data | /data/torrents | /data/media)
+
 # How to install
 
 ### Docker Compose
@@ -27,7 +32,7 @@ testing:
 
 logging:
   # TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL
-  log_level: DEBUG
+  log_level: INFO
 
 notifications:
   # Keep empty to disable notifications
