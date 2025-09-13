@@ -1,10 +1,11 @@
+from datetime import datetime
 import time
 import typing
 import requests
 from enum import Enum
-
 from loguru import logger
 
+from src.utils.datetime_utils import DateTimeUtils
 from src.data.config import CONFIG
 
 
@@ -49,6 +50,7 @@ class DiscordWebhookUtils:
             "description": description,
             "fields": fields,
             "color": embed_color.value,
+            "footer": { "text": DateTimeUtils().get_datetime_readable(dt=datetime.now()) },
         }
 
         data = {
@@ -59,7 +61,7 @@ class DiscordWebhookUtils:
         self.__make_request(json=data)
 
 
-    def send_webhook_message(self, content: str = "") -> None:
+    def send_webhook_message(self, content: str) -> None:
         if not self.webhook_url:
             return
 
