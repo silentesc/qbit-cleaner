@@ -1,4 +1,3 @@
-import qbittorrentapi
 import typing
 from qbittorrentapi import TorrentDictionary, Tracker, TrackersList
 from loguru import logger
@@ -6,6 +5,7 @@ from loguru import logger
 from src.utils.discord_webhook_utils import DiscordWebhookUtils, EmbedColor
 from src.utils.strike_utils import StrikeUtils, StrikeType
 
+from src.utils.qbit_connection import QBIT_CONNECTION
 from src.data.config import CONFIG
 
 
@@ -24,43 +24,44 @@ class DeleteNotWorkingTrackers:
 
         working_content_paths: set[str] = self.get_working_content_paths()
 
-        with qbittorrentapi.Client(**self.conn_info) as qbt_client:
-            for torrent in qbt_client.torrents_info():
-                torrent: TorrentDictionary
-                name: str = torrent.name
-                content_path: str = torrent.content_path
-                trackers: TrackersList = qbt_client.torrents_trackers(torrent.hash)
+        qbt_client = QBIT_CONNECTION.get_client()
 
-                if not self.is_criteria_matching(torrent=torrent, trackers=trackers):
-                    continue
+        for torrent in qbt_client.torrents_info():
+            torrent: TorrentDictionary
+            name: str = torrent.name
+            content_path: str = torrent.content_path
+            trackers: TrackersList = qbt_client.torrents_trackers(torrent.hash)
 
-                logger.info(f"Found torrent without working trackers that matches criteria: {name}")
-                self.take_action(torrent=torrent, content_path=content_path, working_content_paths=working_content_paths)
-                self.send_discord_notification(torrent_name=name, trackers=trackers)
+            if not self.is_criteria_matching(torrent=torrent, trackers=trackers):
+                continue
 
-            hashes = [torrent.hash for torrent in qbt_client.torrents_info()]
-            StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash="unused").cleanup_db(hashes=hashes)
+            logger.info(f"Found torrent without working trackers that matches criteria: {name}")
+            self.take_action(torrent=torrent, content_path=content_path, working_content_paths=working_content_paths)
+            self.send_discord_notification(torrent_name=name, trackers=trackers)
+
+        hashes = [torrent.hash for torrent in qbt_client.torrents_info()]
+        StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash="unused").cleanup_db(hashes=hashes)
 
         logger.info(f"job delete_not_working_trackers finished, next run in {CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"]} hours")
 
 
     def get_working_content_paths(self) -> set[str]:
         content_paths: list[str] = []
-        with qbittorrentapi.Client(**self.conn_info) as qbt_client:
-            for torrent in qbt_client.torrents_info():
-                torrent: TorrentDictionary
-                content_path = torrent.content_path
-                trackers: TrackersList = qbt_client.torrents_trackers(torrent.hash)
+        qbt_client = QBIT_CONNECTION.get_client()
+        for torrent in qbt_client.torrents_info():
+            torrent: TorrentDictionary
+            content_path = torrent.content_path
+            trackers: TrackersList = qbt_client.torrents_trackers(torrent.hash)
 
-                # 0 = Disabled
-                # 1 = Not contacted yet
-                # 2 = Working
-                # 3 = Updating
-                # 4 = Not working
-                working: bool = any(tracker["status"] == 2 for tracker in trackers)
+            # 0 = Disabled
+            # 1 = Not contacted yet
+            # 2 = Working
+            # 3 = Updating
+            # 4 = Not working
+            working: bool = any(tracker["status"] == 2 for tracker in trackers)
 
-                if working:
-                    content_paths.append(content_path)
+            if working:
+                content_paths.append(content_path)
         return set(content_paths)
 
 

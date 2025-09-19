@@ -1,5 +1,4 @@
 import os
-import qbittorrentapi
 import typing
 from datetime import datetime
 from loguru import logger
@@ -10,6 +9,7 @@ from src.utils.strike_utils import StrikeUtils, StrikeType
 
 from src.data.env import ENV
 from src.data.config import CONFIG
+from src.utils.qbit_connection import QBIT_CONNECTION
 
 
 class DeleteOrphaned:
@@ -78,13 +78,13 @@ class DeleteOrphaned:
 
     def get_qbit_file_paths(self) -> set[str]:
         qbit_paths = []
-        with qbittorrentapi.Client(**self.conn_info) as qbt_client:
-            for torrent in qbt_client.torrents_info():
-                if os.path.isfile(torrent.content_path):
-                    qbit_paths.append(torrent.content_path)
-                    continue
-                files = [f"{torrent.content_path}/{"/".join(str(file.name).split("/")[1:])}" for file in torrent.files]
-                qbit_paths.extend(files)
+        qbt_client = QBIT_CONNECTION.get_client()
+        for torrent in qbt_client.torrents_info():
+            if os.path.isfile(torrent.content_path):
+                qbit_paths.append(torrent.content_path)
+                continue
+            files = [f"{torrent.content_path}/{"/".join(str(file.name).split("/")[1:])}" for file in torrent.files]
+            qbit_paths.extend(files)
         return set(qbit_paths)
 
 

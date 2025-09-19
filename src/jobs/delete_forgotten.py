@@ -1,4 +1,3 @@
-import qbittorrentapi
 import typing
 from datetime import datetime
 from qbittorrentapi import TorrentDictionary
@@ -12,6 +11,7 @@ from src.utils.strike_utils import StrikeUtils, StrikeType
 from src.data.env import ENV
 from src.data.constants import DATA_FOLDER_PATH
 from src.data.config import CONFIG
+from src.utils.qbit_connection import QBIT_CONNECTION
 
 
 class DeleteForgotten:
@@ -35,23 +35,27 @@ class DeleteForgotten:
         logger.trace("Getting not_criteria_matching_content_paths")
         not_criteria_matching_content_paths: set[str] = self.get_not_criteria_matching_content_paths()
 
-        with qbittorrentapi.Client(**self.conn_info) as qbt_client:
-            logger.trace("Checking torrents")
-            for torrent in qbt_client.torrents_info():
-                torrent: TorrentDictionary
-                name: str = torrent.name
-                content_path: str = torrent.content_path
+        # Get client
+        qbt_client = QBIT_CONNECTION.get_client()
 
-                # Ignore if criteria not matching
-                if not self.is_criteria_matching(torrent=torrent):
-                    continue
+        # Get torrents
+        logger.trace("Checking torrents")
+        for torrent in qbt_client.torrents_info():
+            torrent: TorrentDictionary
+            name: str = torrent.name
+            content_path: str = torrent.content_path
 
-                logger.info(f"Found torrent that qualifies forgotten: {name}")
-                self.take_action(torrent=torrent, content_path=content_path, not_criteria_matching_content_paths=not_criteria_matching_content_paths)
-                self.send_discord_notification(embed_title="Found forgotten torrent", torrent=torrent)
+            # Ignore if criteria not matching
+            if not self.is_criteria_matching(torrent=torrent):
+                continue
 
-            hashes = [torrent.hash for torrent in qbt_client.torrents_info()]
-            StrikeUtils(strike_type=StrikeType.DELETE_FORGOTTEN, torrent_hash="unused").cleanup_db(hashes=hashes)
+            logger.info(f"Found torrent that qualifies forgotten: {name}")
+            self.take_action(torrent=torrent, content_path=content_path, not_criteria_matching_content_paths=not_criteria_matching_content_paths)
+            self.send_discord_notification(embed_title="Found forgotten torrent", torrent=torrent)
+
+        # Clean strike db
+        hashes = [torrent.hash for torrent in qbt_client.torrents_info()]
+        StrikeUtils(strike_type=StrikeType.DELETE_FORGOTTEN, torrent_hash="unused").cleanup_db(hashes=hashes)
 
         logger.info(f"job delete_forgotten finished, next run in {CONFIG["jobs"]["delete_forgotten"]["interval_hours"]} hours")
 
@@ -59,12 +63,13 @@ class DeleteForgotten:
     def get_not_criteria_matching_content_paths(self) -> set[str]:
         content_paths: list[str] = []
 
-        with qbittorrentapi.Client(**self.conn_info) as qbt_client:
-            for torrent in qbt_client.torrents_info():
-                torrent: TorrentDictionary
-                content_path = torrent.content_path
-                if not self.is_criteria_matching(torrent=torrent):
-                    content_paths.append(content_path)
+        qbt_client = QBIT_CONNECTION.get_client()
+
+        for torrent in qbt_client.torrents_info():
+            torrent: TorrentDictionary
+            content_path = torrent.content_path
+            if not self.is_criteria_matching(torrent=torrent):
+                content_paths.append(content_path)
 
         return set(content_paths)
 

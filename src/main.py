@@ -1,5 +1,4 @@
 import signal
-import sys
 import time
 from typing import Optional, Callable
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -17,24 +16,24 @@ def main() -> int:
     def shutdown(signum, frame):
         logger.info("Shutting down scheduler...")
         scheduler.shutdown(wait=True)
+        try:
+            QBIT_CONNECTION.get_client().auth_log_out()
+        except ConnectionError:
+            pass
         return 0
-
-    # Logging setup
-    logger.debug("Setting up custom logger")
-    logger.remove(0)
-    logger.add(
-        sys.stdout,
-        level=CONFIG["logging"]["log_level"],
-        format=("[{time:YYYY-MM-DD HH:mm:ss}] [<level>{level}</level>]: {message}"),
-        colorize=True,
-        backtrace=True,
-        diagnose=False
-    )
-    logger.debug("Custom logger has been set up")
 
     # Db setup
     DbScripts().create_tables()
 
+    # Login to qbittorrent
+    from src.utils.qbit_connection import QBIT_CONNECTION
+    try:
+        QBIT_CONNECTION.get_client()
+    except ConnectionError:
+        logger.critical("Couldn't establish connection with qbittorrent, exiting")
+        return 1
+
+    # Jobs
     jobs: dict[str, Callable[[], None]] = {
         "delete_orphaned": DeleteOrphaned().run,
         "delete_forgotten": DeleteForgotten().run,
