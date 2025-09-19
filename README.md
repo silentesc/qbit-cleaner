@@ -17,7 +17,7 @@ services:
       - TZ=Etc/UTC
       - TORRENTS_PATH=/data/path/to/torrents
       - MEDIA_PATH=/data/path/to/media
-      - log_level=INFO # TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL
+      - LOG_LEVEL=INFO # TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL
     volumes:
       - /path/to/config:/config
       - /path/to/data:/data

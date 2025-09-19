@@ -7,7 +7,7 @@ if __name__ == "__main__":
     logger.remove(0)
     logger.add(
         sys.stdout,
-        level=os.getenv("log_level") or "INFO",
+        level=os.getenv("LOG_LEVEL") or "INFO",
         format=("[{time:YYYY-MM-DD HH:mm:ss}] [<level>{level}</level>]: {message}"),
         colorize=True,
         backtrace=True,
