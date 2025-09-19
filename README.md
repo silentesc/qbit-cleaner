@@ -17,6 +17,7 @@ services:
       - TZ=Etc/UTC
       - TORRENTS_PATH=/data/path/to/torrents
       - MEDIA_PATH=/data/path/to/media
+      - log_level=INFO # TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL
     volumes:
       - /path/to/config:/config
       - /path/to/data:/data
@@ -29,10 +30,6 @@ testing:
   # Testing a job without waiting for the interval
   # Scheduler will not be started after the test run
   job:
-
-logging:
-  # TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL
-  log_level: INFO
 
 notifications:
   # Keep empty to disable notifications
@@ -81,7 +78,7 @@ jobs:
     interval_hours: 3
     # The minimum amount of days the trackers has to be not working before getting deleted
     # If the trackers work in the meantime, it resets the days counter
-    min_strike_days: 7
+    min_strike_days: 5
     # The minimum amount of strikes the torrent has to get before getting deleted
     # If the trackers work in the meantime, it resets the strikes counter
     required_strikes: 10
