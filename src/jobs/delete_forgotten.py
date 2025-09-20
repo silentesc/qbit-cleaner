@@ -42,11 +42,27 @@ class DeleteForgotten:
         logger.trace("Checking torrents")
         for torrent in qbt_client.torrents_info():
             torrent: TorrentDictionary
+            hash: str = torrent.hash
             name: str = torrent.name
             content_path: str = torrent.content_path
+            seeding_time_days: int = torrent.seeding_time / 60 / 60 / 24
+
+            strike_utils = StrikeUtils(strike_type=StrikeType.DELETE_FORGOTTEN, torrent_hash=hash)
 
             # Ignore if criteria not matching
             if not self.is_criteria_matching(torrent=torrent):
+                strike_utils.reset_torrent()
+                continue
+            # Strike torrent and check if limit reached
+            is_torrent_limit_reached: bool = strike_utils.strike_torrent()
+            if not is_torrent_limit_reached:
+                required_strikes = CONFIG["jobs"]["delete_forgotten"]["required_strikes"]
+                min_strike_days = CONFIG["jobs"]["delete_forgotten"]["min_strike_days"]
+                logger.debug(f"{name} is forgotten but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days)")
+                continue
+            # Torrents seeding less than x days
+            if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
+                logger.debug(f"Found torrent that qualifies forgotten, but ignoring due to not reaching criteria {name} (seeding {round(seeding_time_days, 2)}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
                 continue
 
             logger.info(f"Found torrent that qualifies forgotten: {name}")
@@ -75,42 +91,24 @@ class DeleteForgotten:
 
 
     def is_criteria_matching(self, torrent: TorrentDictionary) -> bool:
-        hash: str = torrent.hash
         name: str = torrent.name
         tags: str = torrent.tags
-        seeding_time_days: int = torrent.seeding_time / 60 / 60 / 24
         content_path: str = torrent.content_path
         completed_on_raw: int = torrent.completion_on
-
-        strike_utils = StrikeUtils(strike_type=StrikeType.DELETE_FORGOTTEN, torrent_hash=hash)
 
         # Protected tags
         if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
             logger.debug(f"{name} doesn't match criteria (has protection a tag)")
             logger.trace(f"Tags of {name}: {tags}")
             logger.trace(f"Protection tag: {CONFIG["qbittorrent"]["protected_tag"]}")
-            strike_utils.reset_torrent()
             return False
         # Uncompleted torrents
         if completed_on_raw == -1:
             logger.debug(f"{name} doesn't match criteria (not completed)")
-            strike_utils.reset_torrent()
             return False
         # Torrents that have a connection to the media library
         if self.file_utils.is_content_in_media_library(content_path=content_path):
             logger.debug(f"{name} doesn't match criteria (has content in media library)")
-            strike_utils.reset_torrent()
-            return False
-        # Strike torrent and check if limit reached
-        is_torrent_limit_reached: bool = strike_utils.strike_torrent()
-        if not is_torrent_limit_reached:
-            required_strikes = CONFIG["jobs"]["delete_forgotten"]["required_strikes"]
-            min_strike_days = CONFIG["jobs"]["delete_forgotten"]["min_strike_days"]
-            logger.debug(f"{name} is forgotten but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days)")
-            return False
-        # Torrents seeding less than x days
-        if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
-            logger.debug(f"Found torrent that qualifies forgotten, but ignoring due to not reaching criteria {name} (seeding {round(seeding_time_days, 2)}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days)")
             return False
 
         return True
