@@ -39,8 +39,7 @@ class StrikeUtils:
 
         # If required strikes and min not working days are reached, delete torrent and return true
         if strikes >= required_strikes and consecutively_days >= min_strike_days:
-            logger.trace(f"Torrent with hash {self.torrent_hash} has reached {strikes} strikes in {consecutively_days} days - entry is being deleted")
-            self.reset_torrent()
+            logger.trace(f"Torrent with hash {self.torrent_hash} has reached {strikes} strikes in {consecutively_days} days")
             return True
 
         logger.trace(f"Torrent with hash {self.torrent_hash} has not reached it's limit ({strikes}/{required_strikes} strikes, {consecutively_days}/{min_strike_days} days)")
