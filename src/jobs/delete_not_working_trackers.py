@@ -1,7 +1,9 @@
 import typing
+from datetime import datetime
 from qbittorrentapi import TorrentDictionary, Tracker, TrackersList
 from loguru import logger
 
+from src.utils.datetime_utils import DateTimeUtils
 from src.utils.discord_webhook_utils import DiscordWebhookUtils, EmbedColor
 from src.utils.strike_utils import StrikeUtils, StrikeType
 
@@ -37,7 +39,7 @@ class DeleteNotWorkingTrackers:
 
             logger.info(f"Found torrent without working trackers that matches criteria: {name}")
             self.take_action(torrent=torrent, content_path=content_path, working_content_paths=working_content_paths)
-            self.send_discord_notification(torrent_name=name, trackers=trackers)
+            self.send_discord_notification(torrent=torrent, trackers=trackers)
 
         hashes = [torrent.hash for torrent in qbt_client.torrents_info()]
         StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash="unused").cleanup_db(hashes=hashes)
@@ -145,18 +147,40 @@ class DeleteNotWorkingTrackers:
                 logger.warning("Invalid action for delete_not_working_trackers job")
 
 
-    def send_discord_notification(self, torrent_name: str, trackers: TrackersList) -> None:
-        tracker_infos: list[str] = self.get_tracker_infos(name=torrent_name, trackers=trackers)
+    def send_discord_notification(self, torrent: TorrentDictionary, trackers: TrackersList) -> None:
+        name: str = torrent.name
+        tracker_infos: list[str] = self.get_tracker_infos(name=name, trackers=trackers)
+        category: str = torrent.category
+        tags: str = torrent.tags
+        ratio: float = torrent.ratio
+        total_size_gib: int = torrent.total_size / 1024 / 1024 / 1024
+        total_size_gb: int = torrent.total_size / 1000 / 1000 / 1000
+        seeding_time_days: int = torrent.seeding_time / 60 / 60 / 24
+        completed_on_raw: int = torrent.completion_on
+        completed_on: datetime = datetime.fromtimestamp(completed_on_raw)
+        added_on_raw: int = torrent.added_on
+        added_on: datetime = datetime.fromtimestamp(added_on_raw)
 
         fields: list[dict[str, str | bool]] = [
             { "name": "Action", "value": CONFIG["jobs"]["delete_not_working_trackers"]["action"] },
-            { "name": "Torrent", "value": torrent_name },
+            { "name": "Name", "value": name },
         ]
         for tracker_info in tracker_infos:
             tracker_info: str
             fields.append(
                 { "name": "Tracker", "value": tracker_info },
             )
+        fields.extend([
+            { "name": "Category", "value": category },
+            { "name": "Tags", "value": tags },
+
+            { "name": "Total Size", "value": f"{str(round(total_size_gib, 2))}GiB | {str(round(total_size_gb, 2))}GB" },
+            { "name": "Ratio", "value": str(round(ratio, 2)) },
+
+            { "name": "Added", "value": DateTimeUtils().get_datetime_readable(added_on) },
+            { "name": "Completed", "value": DateTimeUtils().get_datetime_readable(completed_on) },
+            { "name": "Seeding Days", "value": str(round(seeding_time_days, 2)) },
+        ])
 
         DiscordWebhookUtils().send_webhook_embed(
             embed_color=EmbedColor.GREEN,
