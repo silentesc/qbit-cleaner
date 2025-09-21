@@ -64,7 +64,7 @@ class StrikeUtils:
             logger.trace(f"not torrent_hash in hashes | not {torrent_hash} in hashes | {not torrent_hash in hashes}")
             if not torrent_hash in hashes:
                 StrikeUtils(strike_type=self.strike_type, torrent_hash=torrent_hash).reset_torrent()
-                logger.debug(f"Deleted torrent with hash {torrent_hash} from db because it's not in qbittorrent anymore")
+                logger.trace(f"Deleted torrent with hash {torrent_hash} from db because it's not in qbittorrent anymore")
 
 
     # Utils

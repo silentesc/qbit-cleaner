@@ -55,7 +55,6 @@ class QbitConnection:
 
 
     def get_client(self) -> qbittorrentapi.Client:
-        logger.trace("get qbittorrent client")
         if self.__is_connection_ok():
             return self.client
         else:
