@@ -16,12 +16,6 @@ from src.utils.qbit_connection import QBIT_CONNECTION
 
 class DeleteForgotten:
     def __init__(self) -> None:
-        self.conn_info: dict[str, typing.Any] = dict(
-            host=CONFIG["qbittorrent"]["host"],
-            port=CONFIG["qbittorrent"]["port"],
-            username=CONFIG["qbittorrent"]["username"],
-            password=CONFIG["qbittorrent"]["password"],
-        )
         self.file_utils = FileUtils(
             data_path=DATA_FOLDER_PATH,
             torrents_path=ENV.get_torrents_path(),

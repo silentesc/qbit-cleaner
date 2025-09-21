@@ -13,15 +13,6 @@ from src.utils.qbit_connection import QBIT_CONNECTION
 
 
 class DeleteOrphaned:
-    def __init__(self) -> None:
-        self.conn_info: dict[str, typing.Any] = dict(
-            host=CONFIG["qbittorrent"]["host"],
-            port=CONFIG["qbittorrent"]["port"],
-            username=CONFIG["qbittorrent"]["username"],
-            password=CONFIG["qbittorrent"]["password"],
-        )
-
-
     def run(self) -> None:
         def handle_path(path: str, is_file: bool) -> None:
             if path in qbit_file_paths:

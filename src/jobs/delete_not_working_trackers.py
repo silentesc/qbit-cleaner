@@ -12,15 +12,6 @@ from src.data.config import CONFIG
 
 
 class DeleteNotWorkingTrackers:
-    def __init__(self) -> None:
-        self.conn_info: dict[str, typing.Any] = dict(
-            host=CONFIG["qbittorrent"]["host"],
-            port=CONFIG["qbittorrent"]["port"],
-            username=CONFIG["qbittorrent"]["username"],
-            password=CONFIG["qbittorrent"]["password"],
-        )
-
-
     def run(self) -> None:
         logger.info("Running 'delete_not_working_trackers' job")
 
