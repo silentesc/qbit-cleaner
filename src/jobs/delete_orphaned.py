@@ -16,17 +16,17 @@ class DeleteOrphaned:
     def run(self) -> None:
         def handle_path(path: str, is_file: bool) -> None:
             if path in qbit_file_paths:
-                logger.debug(f"{path} is in qbit_file_paths, ignoring it")
+                logger.trace(f"{path} is in qbit_file_paths, ignoring it")
                 return
             if not is_file and len(os.listdir(path)) != 0:
-                logger.debug(f"{path} is not empty, ignoring it")
+                logger.trace(f"{path} is not empty, ignoring it")
                 return
             orphaned_paths.append(path)
             strike_utils = StrikeUtils(strike_type=StrikeType.DELETE_ORPHANED, torrent_hash=path)
             if not strike_utils.strike_torrent():
                 required_strikes = CONFIG["jobs"]["delete_orphaned"]["required_strikes"]
                 min_strike_days = CONFIG["jobs"]["delete_orphaned"]["min_strike_days"]
-                logger.debug(f"{path} is orphaned but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days)")
+                logger.debug(f"Torrent is orphaned but doesn't reach strike criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days): {path}")
                 return
             logger.info(f"Found orphaned {"file" if is_file else "dir"}: {path}")
             stats = os.stat(path)

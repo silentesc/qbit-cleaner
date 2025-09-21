@@ -1,4 +1,3 @@
-import typing
 from datetime import datetime
 from qbittorrentapi import TorrentDictionary, Tracker, TrackersList
 from loguru import logger
@@ -15,20 +14,34 @@ class DeleteNotWorkingTrackers:
     def run(self) -> None:
         logger.info("Running 'delete_not_working_trackers' job")
 
+        logger.trace("Getting working_content_paths")
         working_content_paths: set[str] = self.get_working_content_paths()
 
         qbt_client = QBIT_CONNECTION.get_client()
 
+        logger.trace("Checking torrents")
         for torrent in qbt_client.torrents_info():
             torrent: TorrentDictionary
+            hash: str = torrent.hash
             name: str = torrent.name
             content_path: str = torrent.content_path
             trackers: TrackersList = qbt_client.torrents_trackers(torrent.hash)
 
+            strike_utils = StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
+
+            # Ignore if criteria not matching
             if not self.is_criteria_matching(torrent=torrent, trackers=trackers):
+                strike_utils.reset_torrent()
+                continue
+            # Ignore not reaching criteria
+            is_torrent_limit_reached: bool = strike_utils.strike_torrent()
+            if not is_torrent_limit_reached:
+                required_strikes = CONFIG["jobs"]["delete_not_working_trackers"]["required_strikes"]
+                min_strike_days = CONFIG["jobs"]["delete_not_working_trackers"]["min_strike_days"]
+                logger.debug(f"Torrent has no working trackers but doesn't reach strike criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days): {name}")
                 continue
 
-            logger.info(f"Found torrent without working trackers that matches criteria: {name}")
+            logger.info(f"Found torrent without working trackers: {name}")
             self.take_action(torrent=torrent, content_path=content_path, working_content_paths=working_content_paths)
             self.send_discord_notification(torrent=torrent, trackers=trackers)
 
@@ -84,7 +97,6 @@ class DeleteNotWorkingTrackers:
 
     def is_criteria_matching(self, torrent: TorrentDictionary, trackers: TrackersList) -> bool:
         name: str = torrent.name
-        hash = torrent.hash
         tags: str = torrent.tags
 
         # 0 = Disabled
@@ -94,26 +106,13 @@ class DeleteNotWorkingTrackers:
         # 4 = Not working
         working: bool = any(tracker["status"] == 2 for tracker in trackers)
 
-        strike_utils = StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash=hash)
-
         # Ignore protected tags
         if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
-            logger.debug(f"Ignoring {name} (has protection a tag)")
-            logger.trace(f"Tags of {name}: {tags}")
-            logger.trace(f"Protection tag: {CONFIG["qbittorrent"]["protected_tag"]}")
-            strike_utils.reset_torrent()
+            logger.trace(f"Not matching criteria due to protection tag: {name}")
             return False
         # Ignore working trackers
         if working:
-            logger.debug(f"Ignoring {name} (trackers are working)")
-            strike_utils.reset_torrent()
-            return False
-        # Ignore not reaching criteria
-        is_torrent_limit_reached: bool = strike_utils.strike_torrent()
-        if not is_torrent_limit_reached:
-            required_strikes = CONFIG["jobs"]["delete_not_working_trackers"]["required_strikes"]
-            min_strike_days = CONFIG["jobs"]["delete_not_working_trackers"]["min_strike_days"]
-            logger.debug(f"{name} has no working trackers but doesn't reach criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days)")
+            logger.trace(f"Not matching criteria due to working trackers: {name}")
             return False
 
         return True
