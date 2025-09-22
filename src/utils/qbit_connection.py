@@ -44,7 +44,7 @@ class QbitConnection:
             self.client.app_version()
             logger.trace("Connection check successful")
             return True
-        except qbittorrentapi.Unauthorized401Error:
+        except (qbittorrentapi.Unauthorized401Error, qbittorrentapi.Forbidden403Error):
             return self.__login()
         except qbittorrentapi.LoginFailed:
             try:
