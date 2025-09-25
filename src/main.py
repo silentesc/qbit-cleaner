@@ -1,21 +1,20 @@
 import signal
 import time
 from typing import Optional, Callable
-from apscheduler.schedulers.blocking import BlockingScheduler
 from loguru import logger
 
 from src.jobs.delete_orphaned import DeleteOrphaned
 from src.jobs.delete_forgotten import DeleteForgotten
 from src.jobs.delete_not_working_trackers import DeleteNotWorkingTrackers
 from src.utils.db_scripts import DbScripts
+from src.utils.job_manager import JobManager
 
 from src.data.config import CONFIG
 
 
 def main() -> int:
     def shutdown(signum, frame):
-        logger.info("Shutting down scheduler...")
-        scheduler.shutdown(wait=True)
+        logger.info("Shutting down...")
         try:
             QBIT_CONNECTION.get_client().auth_log_out()
         except ConnectionError:
@@ -53,19 +52,21 @@ def main() -> int:
         while True:
             time.sleep(1)
 
-    # Job setup
-    scheduler = BlockingScheduler()
-    for job_name, job_method in jobs.items():
-        if CONFIG["jobs"][job_name]["interval_hours"] != 0:
-            scheduler.add_job(job_method, "interval", hours=CONFIG["jobs"][job_name]["interval_hours"])
-            logger.info(f"job {job_name} has been added, next run in {CONFIG["jobs"][job_name]["interval_hours"]} hours")
-
+    # Define shutdown on signal
     signal.signal(signal.SIGTERM, shutdown)
     signal.signal(signal.SIGINT, shutdown)
 
+    # Job setup
+    job_manager = JobManager()
+    for job_name, job_method in jobs.items():
+        interval_hours = int(CONFIG["jobs"][job_name]["interval_hours"])
+        if interval_hours != 0:
+            job_manager.add_job(job_method=job_method, interval_hours=interval_hours)
+            logger.info(f"job {job_name} has been added, next run in {interval_hours} hours")
+
     try:
         logger.info("Startup complete, starting scheduler")
-        scheduler.start()
+        job_manager.start_blocking_scheduler()
     except (KeyboardInterrupt, SystemExit):
         shutdown(signal.SIGINT, None)
 
