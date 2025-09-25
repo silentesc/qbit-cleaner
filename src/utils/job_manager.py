@@ -6,6 +6,7 @@ from typing import Callable
 class JobManager:
     def __init__(self) -> None:
         self.queue: list[Callable[[], None]] = []
+        self.running = True
 
 
     def __enqueue(self, job_func) -> None:
@@ -24,6 +25,8 @@ class JobManager:
 
     def start_blocking_scheduler(self) -> None:
         while True:
+            if not self.running:
+                break
             schedule.run_pending()
             self.__run_pending_sequential()
             time.sleep(1)

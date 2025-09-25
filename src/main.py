@@ -14,7 +14,9 @@ from src.data.config import CONFIG
 
 def main() -> int:
     def shutdown(signum, frame):
-        logger.info("Shutting down...")
+        logger.info("Shutting down scheduler...")
+        job_manager.running = False
+        logger.info("Logging out of Qbittorrent")
         try:
             QBIT_CONNECTION.get_client().auth_log_out()
         except ConnectionError:
