@@ -1,5 +1,5 @@
 from datetime import datetime
-from qbittorrentapi import TorrentDictionary, Tracker, TrackersList
+from qbittorrentapi import TorrentDictionary, TorrentState, Tracker, TrackersList
 from loguru import logger
 
 from src.utils.datetime_utils import DateTimeUtils
@@ -99,6 +99,15 @@ class DeleteNotWorkingTrackers:
         name: str = torrent.name
         tags: str = torrent.tags
 
+        # Ignore protected tags
+        if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
+            logger.trace(f"Not matching criteria due to protection tag: {name}")
+            return False
+        # Ignore stopped torrents
+        if torrent.state_enum.is_stopped:
+            logger.trace(f"Not matching criteria due to stopped: {name}")
+            return False
+
         # 0 = Disabled
         # 1 = Not contacted yet
         # 2 = Working
@@ -106,10 +115,6 @@ class DeleteNotWorkingTrackers:
         # 4 = Not working
         working: bool = any(tracker["status"] == 2 for tracker in trackers)
 
-        # Ignore protected tags
-        if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
-            logger.trace(f"Not matching criteria due to protection tag: {name}")
-            return False
         # Ignore working trackers
         if working:
             logger.trace(f"Not matching criteria due to working trackers: {name}")
