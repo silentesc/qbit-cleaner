@@ -1,5 +1,5 @@
 from datetime import datetime
-from qbittorrentapi import TorrentDictionary, TorrentState, Tracker, TrackersList
+from qbittorrentapi import TorrentDictionary, Tracker, TrackersList
 from loguru import logger
 
 from src.utils.datetime_utils import DateTimeUtils
