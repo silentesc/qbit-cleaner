@@ -3,3 +3,4 @@ qbittorrent-api==2025.7.0
 loguru==0.7.3
 PyYAML==6.0.2
 schedule==1.2.2
+requests==2.32.5
