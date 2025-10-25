@@ -30,9 +30,9 @@ class QbitConnection:
             logger.info("Logged into qbittorrent")
             return True
         except (qbittorrentapi.LoginFailed, qbittorrentapi.APIConnectionError) as e:
-            logger.error(f"Failed to login to qbittorrent on try {try_count}/{self.max_login_try_count}, waiting 5 seconds...")
-            if try_count <= self.max_login_try_count:
-                time.sleep(5)
+            if try_count < self.max_login_try_count:
+                logger.error(f"Failed to login to qbittorrent on try {try_count}/{self.max_login_try_count}, waiting 10 seconds and trying again...")
+                time.sleep(10)
                 return self.__login(try_count=try_count+1)
             else:
                 logger.critical(f"Failed to login to qbittorrent after {try_count} tries: {e}")
