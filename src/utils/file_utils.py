@@ -68,12 +68,12 @@ class FileUtils:
         Checks if the content_path has any connection to the media_path via a link.
         Recursively goes through all files in the folder and checks for links to the media path.
         content_path supports file path and dir path.
-
         Args:
             content_path (str): The path to the file/dir
-
         Returns:
             bool: Whether any of the content (or links of it) is in the media path
+        Raises:
+            Exception: When something wents wrong and this should not be processed
         """
         if os.path.isdir(content_path):
             logger.trace(f"{content_path} is a dir")
@@ -81,6 +81,8 @@ class FileUtils:
                 for filename in files:
                     file_path = os.path.join(root, filename)
                     link_count: int = self.get_link_count(file_path=file_path)
+                    if link_count == -1:
+                        raise Exception("Exception while searching for link count")
                     if link_count > 1:
                         if any([self.media_path in f for f in self.find_hard_links(file_path=file_path)]):
                             logger.trace(f"{file_path} does have hard links in media library")
@@ -98,4 +100,5 @@ class FileUtils:
                     logger.trace(f"{content_path} does not have hard links")
         else:
             logger.warning(f"Not a dir or file, probably be deleted: {content_path}")
+            raise Exception("Exception while checking for isdir or isfile")
         return False

@@ -99,8 +99,12 @@ class DeleteForgotten:
             logger.trace(f"Not matching criteria due to not completed: {name}")
             return False
         # Torrents that have a connection to the media library
-        if self.file_utils.is_content_in_media_library(content_path=content_path):
-            logger.trace(f"Not matching criteria due to has content in media library: {name}")
+        try:
+            if self.file_utils.is_content_in_media_library(content_path=content_path):
+                logger.trace(f"Not matching criteria due to has content in media library: {name}")
+                return False
+        except Exception:
+            logger.trace(f"Not matching criteria due to error while checking for is_content_in_media_library: {name}")
             return False
         # Torrents seeding less than x days
         if check_seeding_time and seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
