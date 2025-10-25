@@ -43,7 +43,7 @@ class DeleteForgotten:
             strike_utils = StrikeUtils(strike_type=StrikeType.DELETE_FORGOTTEN, torrent_hash=hash)
 
             # Ignore if criteria not matching
-            if not self.is_criteria_matching(torrent=torrent):
+            if not self.is_criteria_matching(torrent=torrent, check_seeding_time=False):
                 strike_utils.reset_torrent()
                 continue
             # Strike torrent and check if limit reached
@@ -77,17 +77,18 @@ class DeleteForgotten:
         for torrent in qbt_client.torrents_info():
             torrent: TorrentDictionary
             content_path = torrent.content_path
-            if not self.is_criteria_matching(torrent=torrent):
+            if not self.is_criteria_matching(torrent=torrent, check_seeding_time=True):
                 content_paths.append(content_path)
 
         return set(content_paths)
 
 
-    def is_criteria_matching(self, torrent: TorrentDictionary) -> bool:
+    def is_criteria_matching(self, torrent: TorrentDictionary, check_seeding_time: bool) -> bool:
         name: str = torrent.name
         tags: str = torrent.tags
         content_path: str = torrent.content_path
         completed_on_raw: int = torrent.completion_on
+        seeding_time_days: int = torrent.seeding_time / 60 / 60 / 24
 
         # Protected tags
         if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
@@ -100,6 +101,10 @@ class DeleteForgotten:
         # Torrents that have a connection to the media library
         if self.file_utils.is_content_in_media_library(content_path=content_path):
             logger.trace(f"Not matching criteria due to has content in media library: {name}")
+            return False
+        # Torrents seeding less than x days
+        if check_seeding_time and seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
+            logger.trace(f"Torrent is forgotten but but doesn't reach seed days criteria (seeding {round(seeding_time_days, 2)}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days): {name}")
             return False
 
         return True
