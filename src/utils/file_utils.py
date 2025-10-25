@@ -75,29 +75,29 @@ class FileUtils:
         Raises:
             Exception: When something wents wrong and this should not be processed
         """
+        def has_file_content_in_media_library(file_path: str) -> bool:
+            link_count: int = self.get_link_count(file_path=file_path)
+            if link_count == -1:
+                raise Exception("Exception while searching for link count")
+            if link_count > 1:
+                if any([self.media_path in f for f in self.find_hard_links(file_path=file_path)]):
+                    logger.trace(f"{file_path} does have hard links in media library")
+                    return True
+                else:
+                    logger.trace(f"{file_path} does not have hard links in media library")
+            return False
+
         if os.path.isdir(content_path):
             logger.trace(f"{content_path} is a dir")
             for root, _, files in os.walk(content_path):
                 for filename in files:
                     file_path = os.path.join(root, filename)
-                    link_count: int = self.get_link_count(file_path=file_path)
-                    if link_count == -1:
-                        raise Exception("Exception while searching for link count")
-                    if link_count > 1:
-                        if any([self.media_path in f for f in self.find_hard_links(file_path=file_path)]):
-                            logger.trace(f"{file_path} does have hard links in media library")
-                            return True
-                        else:
-                            logger.trace(f"{file_path} does not have hard links in media library")
+                    if has_file_content_in_media_library(file_path=file_path):
+                        return True
         elif os.path.isfile(content_path):
             logger.trace(f"{content_path} is a file")
-            link_count: int = self.get_link_count(file_path=content_path)
-            if link_count > 1:
-                if any([self.media_path in f for f in self.find_hard_links(file_path=content_path)]):
-                    logger.trace(f"{content_path} does have hard links")
-                    return True
-                else:
-                    logger.trace(f"{content_path} does not have hard links")
+            if has_file_content_in_media_library(file_path=content_path):
+                return True
         else:
             logger.warning(f"Not a dir or file, probably be deleted: {content_path}")
             raise Exception("Exception while checking for isdir or isfile")
