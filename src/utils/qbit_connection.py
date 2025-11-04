@@ -8,7 +8,8 @@ from src.data.config import CONFIG
 
 class QbitConnection:
     def __init__(self) -> None:
-        self.max_login_try_count = 3
+        self.max_login_try_count = 6
+        self.failed_login_sleep_seconds = 60
 
         self.conn_info: dict[str, typing.Any] = dict(
             host=CONFIG["qbittorrent"]["host"],
@@ -31,8 +32,8 @@ class QbitConnection:
             return True
         except (qbittorrentapi.LoginFailed, qbittorrentapi.APIConnectionError) as e:
             if try_count < self.max_login_try_count:
-                logger.error(f"Failed to login to qbittorrent on try {try_count}/{self.max_login_try_count}, waiting 10 seconds and trying again...")
-                time.sleep(10)
+                logger.error(f"Failed to login to qbittorrent on try {try_count}/{self.max_login_try_count}, waiting {self.failed_login_sleep_seconds} seconds and trying again...")
+                time.sleep(self.failed_login_sleep_seconds)
                 return self.__login(try_count=try_count+1)
             else:
                 logger.critical(f"Failed to login to qbittorrent after {try_count} tries: {e}")
