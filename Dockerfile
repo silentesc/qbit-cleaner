@@ -12,13 +12,13 @@ RUN groupadd -g ${PGID} appgroup \
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Create config/data dirs
-RUN mkdir -p /config /data \
-    && chown -R appuser:appgroup /app /config /data
+# Create config dirs
+RUN mkdir -p /config \
+    && chown -R appuser:appgroup /app /config
 
 # Switch to non-root user
 USER appuser
