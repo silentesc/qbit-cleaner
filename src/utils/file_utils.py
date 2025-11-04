@@ -10,7 +10,7 @@ class FileUtils:
         self.media_path = media_path if media_path.endswith("/") else f"{media_path}/"
 
 
-    def find_hard_links(self, file_path: str) -> list[str]:
+    def find_hard_links(self, file_path: str) -> list[str] | None:
         """
         Finds all hard links to a given file on a Linux system.
 
@@ -37,7 +37,7 @@ class FileUtils:
             return result_list
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logger.error(f"An error occurred: {e}")
-            return []
+            return None
 
 
     def get_link_count(self, file_path: str) -> int:
@@ -80,7 +80,10 @@ class FileUtils:
             if link_count == -1:
                 raise Exception("Exception while searching for link count")
             if link_count > 1:
-                if any([self.media_path in f for f in self.find_hard_links(file_path=file_path)]):
+                hard_links: list[str] | None = self.find_hard_links(file_path=file_path)
+                if hard_links is None:
+                    raise Exception("Exception while finding hard links")
+                if any([self.media_path in f for f in hard_links]):
                     logger.trace(f"{file_path} does have hard links in media library")
                     return True
                 else:
