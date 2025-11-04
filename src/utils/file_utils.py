@@ -19,7 +19,8 @@ class FileUtils:
 
         Returns:
             list: A list of paths to all hard links, including the original.
-                Returns an empty list if the file is not found or an error occurs.
+                  Returns an empty list if the file is not found or an error occurs.
+            None: If an error happened
         """
         if not os.path.exists(file_path):
             logger.error(f"Error: File not found at '{file_path}'")
@@ -28,16 +29,21 @@ class FileUtils:
         try:
             stats = os.stat(file_path)
             inode_num = stats.st_ino
-
             command = ['find', self.data_path, '-xdev', '-inum', str(inode_num)]
             result = subprocess.check_output(command, stderr=subprocess.DEVNULL, text=True)
             result_list: list[str] = result.strip().split('\n')
             logger.trace(f"Hard links for {file_path}")
-            [logger.trace(f"--> {r}") for r in result_list]
+            for r in result_list:
+                logger.trace(f"--> {r}")
             return result_list
-        except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            logger.error(f"An error occurred: {e}")
-            return None
+        except FileNotFoundError as e:
+            logger.error(f"Finding hard links failed: {e}")            
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Command {e.cmd!r} failed with error (code {e.returncode}): {e.output}")
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+
+        return None
 
 
     def get_link_count(self, file_path: str) -> int:
