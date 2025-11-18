@@ -23,16 +23,16 @@ class DeleteForgotten:
 
 
     def run(self) -> None:
-        logger.info("Running 'delete_forgotten' job")
+        logger.info("[delete_forgotten] Starting job")
 
-        logger.trace("Getting not_criteria_matching_content_paths")
+        logger.trace("[delete_forgotten] Getting not_criteria_matching_content_paths")
         not_criteria_matching_content_paths: set[str] = self.get_not_criteria_matching_content_paths()
 
         # Get client
         qbt_client = QBIT_CONNECTION.get_client()
 
         # Get torrents
-        logger.trace("Checking torrents")
+        logger.trace("[delete_forgotten] Checking torrents")
         for torrent in qbt_client.torrents_info():
             torrent: TorrentDictionary
             hash: str = torrent.hash
@@ -51,14 +51,14 @@ class DeleteForgotten:
             if not is_torrent_limit_reached:
                 required_strikes = CONFIG["jobs"]["delete_forgotten"]["required_strikes"]
                 min_strike_days = CONFIG["jobs"]["delete_forgotten"]["min_strike_days"]
-                logger.debug(f"Torrent is forgotten but doesn't reach strike criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days): {name}")
+                logger.debug(f"[delete_forgotten] Torrent is forgotten but doesn't reach strike criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days): {name}")
                 continue
             # Torrents seeding less than x days
             if seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
-                logger.debug(f"Torrent is forgotten but but doesn't reach seed days criteria (seeding {round(seeding_time_days, 2)}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days): {name}")
+                logger.debug(f"[delete_forgotten] Torrent is forgotten but but doesn't reach seed days criteria (seeding {round(seeding_time_days, 2)}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days): {name}")
                 continue
 
-            logger.info(f"Found forgotten Torrent: {name}")
+            logger.info(f"[delete_forgotten] Found forgotten Torrent: {name}")
             self.take_action(torrent=torrent, content_path=content_path, not_criteria_matching_content_paths=not_criteria_matching_content_paths)
             self.send_discord_notification(embed_title="Found forgotten torrent", torrent=torrent)
 
@@ -66,7 +66,7 @@ class DeleteForgotten:
         hashes = [torrent.hash for torrent in qbt_client.torrents_info()]
         StrikeUtils(strike_type=StrikeType.DELETE_FORGOTTEN, torrent_hash="unused").cleanup_db(hashes=hashes)
 
-        logger.info(f"job delete_forgotten finished, next run in {CONFIG["jobs"]["delete_forgotten"]["interval_hours"]} hours")
+        logger.info(f"[delete_forgotten] Job finished, next run in {CONFIG["jobs"]["delete_forgotten"]["interval_hours"]} hours")
 
 
     def get_not_criteria_matching_content_paths(self) -> set[str]:
@@ -92,23 +92,23 @@ class DeleteForgotten:
 
         # Protected tags
         if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
-            logger.trace(f"Not matching criteria due to protection tag: {name}")
+            logger.trace(f"[delete_forgotten] Not matching criteria due to protection tag: {name}")
             return False
         # Uncompleted torrents
         if completed_on_raw == -1:
-            logger.trace(f"Not matching criteria due to not completed: {name}")
+            logger.trace(f"[delete_forgotten] Not matching criteria due to not completed: {name}")
             return False
         # Torrents that have a connection to the media library
         try:
             if self.file_utils.is_content_in_media_library(content_path=content_path):
-                logger.trace(f"Not matching criteria due to has content in media library: {name}")
+                logger.trace(f"[delete_forgotten] Not matching criteria due to has content in media library: {name}")
                 return False
         except Exception:
-            logger.trace(f"Not matching criteria due to error while checking for is_content_in_media_library: {name}")
+            logger.trace(f"[delete_forgotten] Not matching criteria due to error while checking for is_content_in_media_library: {name}")
             return False
         # Torrents seeding less than x days
         if check_seeding_time and seeding_time_days < CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]:
-            logger.trace(f"Torrent is forgotten but but doesn't reach seed days criteria (seeding {round(seeding_time_days, 2)}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days): {name}")
+            logger.trace(f"[delete_forgotten] Torrent is forgotten but but doesn't reach seed days criteria (seeding {round(seeding_time_days, 2)}/{CONFIG["jobs"]["delete_forgotten"]["min_seeding_days"]} days): {name}")
             return False
 
         return True
@@ -117,19 +117,19 @@ class DeleteForgotten:
     def take_action(self, torrent: TorrentDictionary, content_path: str, not_criteria_matching_content_paths: set[str]) -> None:
         match CONFIG["jobs"]["delete_forgotten"]["action"]:
             case "test":
-                logger.info("Action = test | Torrent remains unhandled")
+                logger.info("[delete_forgotten] Action = test | Torrent remains unhandled")
             case "stop":
-                logger.info("Action = stop | Stopping torrent")
+                logger.info("[delete_forgotten] Action = stop | Stopping torrent")
                 torrent.stop()
             case "delete":
-                logger.info("Action = delete | Deleting torrent + files")
+                logger.info("[delete_forgotten] Action = delete | Deleting torrent + files")
                 if content_path in not_criteria_matching_content_paths:
-                    logger.warning(f"Only deleting torrent and not files for {torrent.name} Some other torrent that uses these files doesn't match criteria")
+                    logger.warning(f"[delete_forgotten] Only deleting torrent and not files for {torrent.name} Some other torrent that uses these files doesn't match criteria")
                     torrent.delete(delete_files=False)
                 else:
                     torrent.delete(delete_files=True)
             case _:
-                logger.warning("Invalid action for delete_forgotten job")
+                logger.warning("[delete_forgotten] Invalid action for delete_forgotten job")
 
 
     def send_discord_notification(self, embed_title: str, torrent: TorrentDictionary) -> None:

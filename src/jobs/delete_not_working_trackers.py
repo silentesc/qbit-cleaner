@@ -12,14 +12,14 @@ from src.data.config import CONFIG
 
 class DeleteNotWorkingTrackers:
     def run(self) -> None:
-        logger.info("Running 'delete_not_working_trackers' job")
+        logger.info("[delete_not_working_trackers] Starting job")
 
-        logger.trace("Getting working_content_paths")
+        logger.trace("[delete_not_working_trackers] Getting working_content_paths")
         working_content_paths: set[str] = self.get_working_content_paths()
 
         qbt_client = QBIT_CONNECTION.get_client()
 
-        logger.trace("Checking torrents")
+        logger.trace("[delete_not_working_trackers] Checking torrents")
         for torrent in qbt_client.torrents_info():
             torrent: TorrentDictionary
             hash: str = torrent.hash
@@ -38,17 +38,17 @@ class DeleteNotWorkingTrackers:
             if not is_torrent_limit_reached:
                 required_strikes = CONFIG["jobs"]["delete_not_working_trackers"]["required_strikes"]
                 min_strike_days = CONFIG["jobs"]["delete_not_working_trackers"]["min_strike_days"]
-                logger.debug(f"Torrent has no working trackers but doesn't reach strike criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days): {name}")
+                logger.debug(f"[delete_not_working_trackers] Torrent has no working trackers but doesn't reach strike criteria ({strike_utils.get_strikes()}/{required_strikes} strikes, {strike_utils.get_consecutive_days()}/{min_strike_days} days): {name}")
                 continue
 
-            logger.info(f"Found torrent without working trackers: {name}")
+            logger.info(f"[delete_not_working_trackers] Found torrent without working trackers: {name}")
             self.take_action(torrent=torrent, content_path=content_path, working_content_paths=working_content_paths)
             self.send_discord_notification(torrent=torrent, trackers=trackers)
 
         hashes = [torrent.hash for torrent in qbt_client.torrents_info()]
         StrikeUtils(strike_type=StrikeType.DELETE_NOT_WORKING_TRACKERS, torrent_hash="unused").cleanup_db(hashes=hashes)
 
-        logger.info(f"job delete_not_working_trackers finished, next run in {CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"]} hours")
+        logger.info(f"[delete_not_working_trackers] Job finished, next run in {CONFIG["jobs"]["delete_not_working_trackers"]["interval_hours"]} hours")
 
 
     def get_working_content_paths(self) -> set[str]:
@@ -90,7 +90,7 @@ class DeleteNotWorkingTrackers:
             tracker_info += f"URL: {tracker_url}\n"
             tracker_info += f"Status: {tracker_status}\n"
             tracker_info += f"Message: {tracker_msg}\n"
-            logger.debug(f"Not working tracker ({name}):\n{tracker_info}")
+            logger.debug(f"[delete_not_working_trackers] Not working tracker ({name}):\n{tracker_info}")
             tracker_infos.append(tracker_info)
         return tracker_infos
 
@@ -101,11 +101,11 @@ class DeleteNotWorkingTrackers:
 
         # Ignore protected tags
         if CONFIG["qbittorrent"]["protected_tag"] in tags.lower():
-            logger.trace(f"Not matching criteria due to protection tag: {name}")
+            logger.trace(f"[delete_not_working_trackers] Not matching criteria due to protection tag: {name}")
             return False
         # Ignore stopped torrents
         if torrent.state_enum.is_stopped:
-            logger.trace(f"Not matching criteria due to stopped: {name}")
+            logger.trace(f"[delete_not_working_trackers] Not matching criteria due to stopped: {name}")
             return False
 
         # 0 = Disabled
@@ -117,7 +117,7 @@ class DeleteNotWorkingTrackers:
 
         # Ignore working trackers
         if working:
-            logger.trace(f"Not matching criteria due to working trackers: {name}")
+            logger.trace(f"[delete_not_working_trackers] Not matching criteria due to working trackers: {name}")
             return False
 
         return True
@@ -126,20 +126,20 @@ class DeleteNotWorkingTrackers:
     def take_action(self, torrent: TorrentDictionary, content_path: str, working_content_paths: set[str]) -> None:
         match CONFIG["jobs"]["delete_not_working_trackers"]["action"]:
             case "test":
-                logger.info("Action = test | Torrent remains unhandled")
+                logger.info("[delete_not_working_trackers] Action = test | Torrent remains unhandled")
             case "stop":
-                logger.info("Action = stop | Stopping torrent")
+                logger.info("[delete_not_working_trackers] Action = stop | Stopping torrent")
                 torrent.stop()
             case "delete":
-                logger.info("Action = delete | Deleting torrent + files")
+                logger.info("[delete_not_working_trackers] Action = delete | Deleting torrent + files")
                 # Ignore if another working torrent has the same files
                 if content_path in working_content_paths:
-                    logger.warning(f"Only deleting torrent and not files for {torrent.name} Some other torrent that uses these files has working trackers")
+                    logger.warning(f"[delete_not_working_trackers] Only deleting torrent and not files for {torrent.name} Some other torrent that uses these files has working trackers")
                     torrent.delete(delete_files=False)
                 else:
                     torrent.delete(delete_files=True)
             case _:
-                logger.warning("Invalid action for delete_not_working_trackers job")
+                logger.warning("[delete_not_working_trackers] Invalid action for delete_not_working_trackers job")
 
 
     def send_discord_notification(self, torrent: TorrentDictionary, trackers: TrackersList) -> None:
