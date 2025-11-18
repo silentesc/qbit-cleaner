@@ -101,6 +101,9 @@ class FileUtils:
                     logger.trace(f"{file_path} does not have hard links in media library")
             return False
 
+        if not os.path.exists(content_path):
+            return False
+
         if os.path.isdir(content_path):
             logger.trace(f"{content_path} is a dir")
             for root, _, files in os.walk(content_path):
