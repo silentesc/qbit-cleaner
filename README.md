@@ -1,3 +1,23 @@
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+# qbit-cleaner will no longer be updated and has been replaced by [torrent-cleaner](https://github.com/silentesc/torrent-cleaner) with improved performance and stability
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
 # Prerequirements
 - Have the torrents and media library on the same filesystem (needed for hardlinking)
 - Use only hardlinks (not symlinks etc.) or you risk deleting data you want to keep
